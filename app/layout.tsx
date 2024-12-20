@@ -1,14 +1,15 @@
 import "@/app/ui/global.css";
-import { inter } from "@/app/ui/fonts";
+import { primaryFont } from "@/app/ui/fonts";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | Acme Dashboard",
-    default: "Acme Dashboard",
+    template: "%s | OLaF DG",
+    default: "OLaF DG",
   },
-  description: "The official Next.js Learn Dashboard built with App Router.",
-  metadataBase: new URL("https://next-learn-dashboard.vercel.sh"),
+  description: "Open-source lost and found management for disc golf",
+  keywords: ["disc golf", "lost and found"],
+  creator: "Jesse Storbeck",
 };
 
 export default function RootLayout({
@@ -18,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>{children}</body>
+      <body className={`${primaryFont.className} antialiased`}>{children}</body>
     </html>
   );
 }

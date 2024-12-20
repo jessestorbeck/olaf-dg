@@ -1,9 +1,10 @@
 "use client";
 
 import {
-  UserGroupIcon,
   HomeIcon,
-  DocumentDuplicateIcon,
+  CircleStackIcon,
+  UserGroupIcon,
+  Cog8ToothIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -14,11 +15,12 @@ import clsx from "clsx";
 const links = [
   { name: "Home", href: "/dashboard", icon: HomeIcon },
   {
-    name: "Invoices",
-    href: "/dashboard/invoices",
-    icon: DocumentDuplicateIcon,
+    name: "Discs",
+    href: "/dashboard/discs",
+    icon: CircleStackIcon,
   },
-  { name: "Customers", href: "/dashboard/customers", icon: UserGroupIcon },
+  { name: "Players", href: "/dashboard/players", icon: UserGroupIcon },
+  { name: "Settings", href: "/dashboard/settings", icon: Cog8ToothIcon },
 ];
 
 export default function NavLinks() {
@@ -32,13 +34,16 @@ export default function NavLinks() {
             key={link.name}
             href={link.href}
             className={clsx(
-              "flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-sky-100 hover:text-blue-600 md:flex-none md:justify-start md:p-2 md:px-3",
+              "flex h-[48px] grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-emerald-200 hover:text-emerald-700 md:flex-none md:justify-start md:p-2 md:px-3",
               {
-                "bg-sky-100 text-blue-600": pathname === link.href,
+                "bg-emerald-200 text-emerald-700": pathname === link.href,
               }
             )}
           >
-            <LinkIcon className="w-6" />
+            <LinkIcon
+              // Rotate database icon so it looks less database-y
+              className={clsx("w-6", { "rotate-90": link.name === "Discs" })}
+            />
             <p className="hidden md:block">{link.name}</p>
           </Link>
         );

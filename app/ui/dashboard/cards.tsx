@@ -4,34 +4,26 @@ import {
   UserGroupIcon,
   InboxIcon,
 } from "@heroicons/react/24/outline";
-import { lusitana } from "@/app/ui/fonts";
+import { primaryFont } from "@/app/ui/fonts";
 import { fetchCardData } from "@/app/lib/data";
 
 const iconMap = {
   collected: BanknotesIcon,
-  customers: UserGroupIcon,
+  players: UserGroupIcon,
   pending: ClockIcon,
-  invoices: InboxIcon,
+  discs: InboxIcon,
 };
 
 export default async function CardWrapper() {
-  const {
-    numberOfInvoices,
-    numberOfCustomers,
-    totalPaidInvoices,
-    totalPendingInvoices,
-  } = await fetchCardData();
+  const { numberOfDiscs, numberOfPlayers, totalPaidDiscs, totalPendingDiscs } =
+    await fetchCardData();
 
   return (
     <>
-      <Card title="Collected" value={totalPaidInvoices} type="collected" />
-      <Card title="Pending" value={totalPendingInvoices} type="pending" />
-      <Card title="Total Invoices" value={numberOfInvoices} type="invoices" />
-      <Card
-        title="Total Customers"
-        value={numberOfCustomers}
-        type="customers"
-      />
+      <Card title="Collected" value={totalPaidDiscs} type="collected" />
+      <Card title="Pending" value={totalPendingDiscs} type="pending" />
+      <Card title="Total Discs" value={numberOfDiscs} type="discs" />
+      <Card title="Total Players" value={numberOfPlayers} type="players" />
     </>
   );
 }
@@ -43,7 +35,7 @@ export function Card({
 }: {
   title: string;
   value: number | string;
-  type: "invoices" | "customers" | "pending" | "collected";
+  type: "discs" | "players" | "pending" | "collected";
 }) {
   const Icon = iconMap[type];
 
@@ -56,7 +48,7 @@ export function Card({
         <h3 className="ml-2 text-sm font-medium">{title}</h3>
       </div>
       <p
-        className={`${lusitana.className}
+        className={`${primaryFont.className}
           truncate rounded-xl bg-white px-4 py-8 text-center text-2xl`}
       >
         {value}
