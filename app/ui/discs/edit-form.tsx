@@ -10,7 +10,10 @@ import { fields } from "./fields";
 export default function EditForm({ disc }: { disc: Disc }) {
   const initialState: State = { message: null, errors: {} };
   const updateDiscWithId = updateDisc.bind(null, disc.id);
-  const [state, formAction] = useActionState(updateDiscWithId, initialState);
+  const [state, formAction, pending] = useActionState(
+    updateDiscWithId,
+    initialState
+  );
 
   return (
     <form action={formAction}>
@@ -71,7 +74,9 @@ export default function EditForm({ disc }: { disc: Disc }) {
         >
           Cancel
         </Link>
-        <Button type="submit">Edit Disc</Button>
+        <Button type="submit" disabled={pending}>
+          Edit Disc
+        </Button>
       </div>
     </form>
   );

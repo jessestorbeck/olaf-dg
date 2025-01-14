@@ -23,8 +23,10 @@ export type Disc = {
   held_until: string;
   notified: boolean;
   reminded: boolean;
-  // Discs can be awaiting pickup, picked up, abandoned, or removed
-  status: "awaiting pickup" | "picked up" | "abandoned" | "removed";
+  // Discs can be awaiting pickup, picked up, or archived
+  status: "awaiting pickup" | "picked up" | "archived";
+  created_at: string;
+  updated_at: string;
 };
 
 export type Trends = {

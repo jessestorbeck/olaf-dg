@@ -1,14 +1,15 @@
 "use client";
 
+import { useActionState } from "react";
 import Link from "next/link";
+
 import { Button } from "@/app/ui/button";
 import { createDisc, State } from "@/app/lib/actions";
-import { useActionState } from "react";
 import { fields } from "./fields";
 
 export default function AddForm() {
   const initialState: State = { message: null, errors: {} };
-  const [state, formAction] = useActionState(createDisc, initialState);
+  const [state, formAction, pending] = useActionState(createDisc, initialState);
 
   return (
     <form action={formAction}>
@@ -67,7 +68,9 @@ export default function AddForm() {
         >
           Cancel
         </Link>
-        <Button type="submit">Create Disc</Button>
+        <Button type="submit" disabled={pending}>
+          Create Disc
+        </Button>
       </div>
     </form>
   );

@@ -6,21 +6,45 @@ const client = await db.connect();
 
 async function seedUsers() {
   await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
+  // Create the trigger function
+  await client.sql`
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `;
+
+  // Create the users table
   await client.sql`
     CREATE TABLE IF NOT EXISTS users (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL
+      password TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
   `;
 
+  // Create the trigger
+  await client.sql`
+    CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  `;
+
+  // Insert the seed users
   const insertedUsers = await Promise.all(
     users.map(async (user) => {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       return client.sql`
-        INSERT INTO users (id, name, email, password)
-        VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
+        INSERT INTO users (name, email, password)
+        VALUES (${user.name}, ${user.email}, ${hashedPassword})
         ON CONFLICT (id) DO NOTHING;
       `;
     })
@@ -32,6 +56,18 @@ async function seedUsers() {
 async function seedDiscs() {
   await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
+  // Create the trigger function
+  await client.sql`
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `;
+
+  // Create the discs table
   await client.sql`
     CREATE TABLE IF NOT EXISTS discs (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -41,21 +77,31 @@ async function seedDiscs() {
       brand VARCHAR(255),
       plastic VARCHAR(255),
       mold VARCHAR(255),
-      date DATE NOT NULL,
-      held_until DATE NOT NULL,
       location VARCHAR(255),
       notes VARCHAR(255),
       notified BOOLEAN NOT NULL,
       reminded BOOLEAN NOT NULL,
-      status VARCHAR(255) NOT NULL
+      status VARCHAR(255) NOT NULL,
+      held_until TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
   `;
 
+  // Create the trigger
+  await client.sql`
+    CREATE TRIGGER update_discs_updated_at
+    BEFORE UPDATE ON discs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  `;
+
+  // Insert the seed discs
   const insertedDiscs = await Promise.all(
     discs.map(
       (disc) => client.sql`
-        INSERT INTO discs (name, phone, color, brand, plastic, mold, date, held_until, location, notes, notified, reminded, status)
-        VALUES (${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.date}, ${disc.held_until}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
+        INSERT INTO discs (name, phone, color, brand, plastic, mold, held_until, location, notes, notified, reminded, status)
+        VALUES (${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.held_until}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
         ON CONFLICT (id) DO NOTHING;
       `
     )
@@ -69,10 +115,21 @@ async function seedTrends() {
     CREATE TABLE IF NOT EXISTS trends (
       month VARCHAR(4) NOT NULL UNIQUE,
       found INT NOT NULL,
-      returned INT NOT NULL
+      returned INT NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
     );
   `;
 
+  // Create the trigger
+  await client.sql`
+    CREATE TRIGGER update_trends_updated_at
+    BEFORE UPDATE ON trends
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  `;
+
+  // Insert the seed trends
   const insertedTrends = await Promise.all(
     trends.map(
       (monthly) => client.sql`
@@ -89,15 +146,21 @@ async function seedTrends() {
 export async function GET() {
   try {
     await client.sql`BEGIN`;
+    console.log("Seeding database");
     await seedUsers();
     await seedDiscs();
     await seedTrends();
-    console.log("Seeding complete");
     await client.sql`COMMIT`;
 
-    return Response.json({ message: "Database seeded successfully" });
+    return new Response(
+      JSON.stringify({ message: "Database seeded successfully" }),
+      { status: 200 }
+    );
   } catch (error) {
     await client.sql`ROLLBACK`;
-    return Response.json({ error }, { status: 500 });
+    console.error("Database seeding error:", error);
+    return new Response(JSON.stringify({ error: "Database seeding failed" }), {
+      status: 500,
+    });
   }
 }

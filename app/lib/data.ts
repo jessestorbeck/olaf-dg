@@ -14,9 +14,9 @@ export async function fetchTrends() {
 export async function fetchLatestDiscs() {
   try {
     const data = await sql<Disc>`
-      SELECT name, phone, id, color, brand, plastic, mold, date
+      SELECT name, phone, id, color, brand, plastic, mold, created_at
       FROM discs
-      ORDER BY date DESC
+      ORDER BY created_at DESC
       LIMIT 5`;
 
     return data.rows;
@@ -61,10 +61,9 @@ export async function fetchFilteredDiscs(query: string, currentPage: number) {
         brand ILIKE ${`%${query}%`} OR
         plastic ILIKE ${`%${query}%`} OR
         mold ILIKE ${`%${query}%`} OR
-        date::text ILIKE ${`%${query}%`} OR
         held_until::text ILIKE ${`%${query}%`} OR
         location ILIKE ${`%${query}%`}
-      ORDER BY date DESC
+      ORDER BY created_at DESC
       LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
 
@@ -86,7 +85,6 @@ export async function fetchDiscsPages(query: string) {
       brand ILIKE ${`%${query}%`} OR
       plastic ILIKE ${`%${query}%`} OR
       mold ILIKE ${`%${query}%`} OR
-      date::text ILIKE ${`%${query}%`} OR
       held_until::text ILIKE ${`%${query}%`} OR
       location ILIKE ${`%${query}%`}
   `;

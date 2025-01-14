@@ -1,6 +1,6 @@
-import { UpdateDisc, DeleteDisc } from "@/app/ui/discs/buttons";
+import { UpdateDisc, DeleteDiscs } from "@/app/ui/discs/action-buttons";
 import DiscStatus from "@/app/ui/discs/status";
-import { formatDateToLocal } from "@/app/lib/utils";
+import { formatDate } from "@/app/lib/utils";
 import { fetchFilteredDiscs } from "@/app/lib/data";
 
 export default async function DiscsTable({
@@ -33,11 +33,11 @@ export default async function DiscsTable({
                 </div>
                 <div className="flex w-full items-center justify-between pt-4">
                   <div>
-                    <p>{formatDateToLocal(disc.date)}</p>
+                    <p>{formatDate(disc.created_at)}</p>
                   </div>
                   <div className="flex justify-end gap-2">
                     <UpdateDisc id={disc.id} />
-                    <DeleteDisc id={disc.id} />
+                    <DeleteDiscs ids={[disc.id]} />
                   </div>
                 </div>
               </div>
@@ -100,10 +100,10 @@ export default async function DiscsTable({
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">{disc.mold}</td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {formatDateToLocal(disc.date)}
+                    {formatDate(disc.created_at)}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
-                    {formatDateToLocal(disc.held_until)}
+                    {disc.held_until ? formatDate(disc.held_until) : ""}
                   </td>
                   <td className="whitespace-nowrap px-3 py-3">
                     {disc.location}
@@ -114,7 +114,7 @@ export default async function DiscsTable({
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
                       <UpdateDisc id={disc.id} />
-                      <DeleteDisc id={disc.id} />
+                      <DeleteDiscs ids={[disc.id]} />
                     </div>
                   </td>
                 </tr>
