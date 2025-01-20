@@ -37,7 +37,7 @@ const columnHeader = (column: Column<Disc>, columnName: string) => {
       className={clsx(
         "flex items-center cursor-pointer hover:text-emerald-600",
         // Bold the column header if it's sorted
-        { "font-bold": column.getIsSorted() }
+        { "font-bold text-primary": column.getIsSorted() }
       )}
       onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
     >

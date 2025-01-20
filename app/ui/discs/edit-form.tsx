@@ -1,19 +1,31 @@
 "use client";
 
-import { Disc } from "@/app/lib/definitions";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
+
 import { Button } from "@/app/ui/button";
+import { useToast } from "@/app/hooks/use-toast";
 import { updateDisc, State } from "@/app/lib/actions";
-import { useActionState } from "react";
 import { fields } from "./fields";
+import { Disc } from "@/app/lib/definitions";
 
 export default function EditForm({ disc }: { disc: Disc }) {
-  const initialState: State = { message: null, errors: {} };
+  const initialState: State = { message: null, formData: disc };
   const updateDiscWithId = updateDisc.bind(null, disc.id);
   const [state, formAction, pending] = useActionState(
     updateDiscWithId,
     initialState
   );
+
+  const { toast } = useToast();
+  useEffect(() => {
+    if (state.message !== null) {
+      toast({
+        title: state.errors ? "Something went wrong!" : "Disc updated!",
+        description: state.message,
+      });
+    }
+  }, [state, toast]);
 
   return (
     <form action={formAction}>
@@ -34,17 +46,25 @@ export default function EditForm({ disc }: { disc: Disc }) {
                       id={field.id}
                       name={field.id}
                       placeholder={field.placeholder}
+                      defaultValue={
+                        state.formData?.[
+                          field.id as keyof typeof state.formData
+                        ]
+                      }
                       className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
-                      rows={2}
-                      defaultValue={disc[field.id]}
                       aria-describedby={`${field.id}-error`}
+                      rows={2}
                     />
                   : <input
                       id={field.id}
                       name={field.id}
                       type="text"
                       placeholder={field.placeholder}
-                      defaultValue={disc[field.id]}
+                      defaultValue={
+                        state.formData?.[
+                          field.id as keyof typeof state.formData
+                        ]
+                      }
                       className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
                       aria-describedby={`${field.id}-error`}
                     />
@@ -55,27 +75,28 @@ export default function EditForm({ disc }: { disc: Disc }) {
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  {state.errors?.[field.id] &&
-                    state.errors[field.id].map((error: string) => (
-                      <p className="mt-2 text-sm text-red-500" key={error}>
-                        {error}
-                      </p>
-                    ))}
+                  {state.errors?.[field.id as keyof typeof state.errors] &&
+                    state.errors[field.id as keyof typeof state.errors]?.map(
+                      (error: string) => (
+                        <p className="mt-2 text-sm text-red-500" key={error}>
+                          {error}
+                        </p>
+                      )
+                    )}
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <div className="mt-6 flex justify-end gap-4">
-        <Link
-          href="/dashboard/discs"
-          className="flex h-10 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
-        >
-          Cancel
-        </Link>
+      {/* Hidden input to handle whether server action redirects or not */}
+      <input type="hidden" id="addAnother" name="addAnother" value="false" />
+      <div className="mt-4 flex justify-end gap-4">
+        <Button variant="outline">
+          <Link href="/dashboard/discs">Cancel</Link>
+        </Button>
         <Button type="submit" disabled={pending}>
-          Edit Disc
+          Save
         </Button>
       </div>
     </form>

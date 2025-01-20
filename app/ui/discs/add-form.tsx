@@ -1,15 +1,26 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
 
 import { Button } from "@/app/ui/button";
+import { useToast } from "@/app/hooks/use-toast";
 import { createDisc, State } from "@/app/lib/actions";
 import { fields } from "./fields";
 
 export default function AddForm() {
-  const initialState: State = { message: null, errors: {} };
+  const initialState: State = { message: null };
   const [state, formAction, pending] = useActionState(createDisc, initialState);
+
+  const { toast } = useToast();
+  useEffect(() => {
+    if (state.message !== null) {
+      toast({
+        title: state.errors ? "Something went wrong!" : "Disc added!",
+        description: state.message,
+      });
+    }
+  }, [state, toast]);
 
   return (
     <form action={formAction}>
@@ -30,6 +41,11 @@ export default function AddForm() {
                       id={field.id}
                       name={field.id}
                       placeholder={field.placeholder}
+                      defaultValue={
+                        state.formData?.[
+                          field.id as keyof typeof state.formData
+                        ]
+                      }
                       className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
                       aria-describedby={`${field.id}-error`}
                       rows={2}
@@ -39,6 +55,11 @@ export default function AddForm() {
                       name={field.id}
                       type="text"
                       placeholder={field.placeholder}
+                      defaultValue={
+                        state.formData?.[
+                          field.id as keyof typeof state.formData
+                        ]
+                      }
                       className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
                       aria-describedby={`${field.id}-error`}
                     />
@@ -49,27 +70,40 @@ export default function AddForm() {
                   aria-live="polite"
                   aria-atomic="true"
                 >
-                  {state.errors?.[field.id] &&
-                    state.errors[field.id].map((error: string) => (
-                      <p className="mt-2 text-sm text-red-500" key={error}>
-                        {error}
-                      </p>
-                    ))}
+                  {state.errors?.[field.id as keyof typeof state.errors] &&
+                    state.errors[field.id as keyof typeof state.errors]?.map(
+                      (error: string) => (
+                        <p className="mt-2 text-sm text-red-500" key={error}>
+                          {error}
+                        </p>
+                      )
+                    )}
                 </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <div className="mt-6 flex justify-end gap-4">
-        <Link
-          href="/dashboard/discs"
-          className="flex h-10 items-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-200"
+      {/* Hidden input to handle whether server action redirects or not */}
+      <input type="hidden" id="addAnother" name="addAnother" value="false" />
+      <div className="mt-4 flex justify-end gap-4">
+        <Button variant="outline">
+          <Link href="/dashboard/discs">Cancel</Link>
+        </Button>
+        <Button variant="outline" type="submit" disabled={pending}>
+          Save and close
+        </Button>
+        <Button
+          type="submit"
+          onClick={() => {
+            const addAnother = document.querySelector(
+              'input[id="addAnother"]'
+            ) as HTMLInputElement;
+            addAnother.value = "true";
+          }}
+          disabled={pending}
         >
-          Cancel
-        </Link>
-        <Button type="submit" disabled={pending}>
-          Create Disc
+          Save and add another
         </Button>
       </div>
     </form>

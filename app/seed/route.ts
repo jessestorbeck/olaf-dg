@@ -100,8 +100,8 @@ async function seedDiscs() {
   const insertedDiscs = await Promise.all(
     discs.map(
       (disc) => client.sql`
-        INSERT INTO discs (name, phone, color, brand, plastic, mold, held_until, location, notes, notified, reminded, status)
-        VALUES (${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.held_until}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
+        INSERT INTO discs (name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status)
+        VALUES (${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
         ON CONFLICT (id) DO NOTHING;
       `
     )

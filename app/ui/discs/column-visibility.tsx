@@ -8,7 +8,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/app/ui/dropdown-menu";
-import { Button } from "@/app/ui/button-new";
+import { Button } from "@/app/ui/button";
 
 interface columnVisibilityProps<TData> {
   table: Table<TData>;

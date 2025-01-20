@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -10,10 +11,11 @@ import {
   getSortedRowModel,
   getCoreRowModel,
   getFilteredRowModel,
-  //getPaginationRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
+import { useToast } from "@/app/hooks/use-toast";
 import {
   Table,
   TableBody,
@@ -21,7 +23,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/app/ui/discs/table-new";
+} from "@/app/ui/discs/table";
+import { DataTablePagination } from "@/app/ui/discs/data-table-pagination";
 import { DiscStatusFilter } from "./disc-status-filter";
 import { ColumnVisibility } from "./column-visibility";
 import { Disc } from "@/app/lib/definitions";
@@ -51,15 +54,35 @@ export function DataTable<TData extends Disc, TValue>({
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onRowSelectionChange: setRowSelection,
+    getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     state: { sorting, rowSelection, columnFilters, columnVisibility },
   });
 
+  // For toast notifications
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const toastTitle = searchParams.get("title");
+  const toastMessage = searchParams.get("message");
+  const pathname = usePathname();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (toastMessage) {
+      toast({
+        title: decodeURIComponent(toastTitle as string),
+        description: decodeURIComponent(toastMessage as string),
+      });
+      // Remove the message from the path after displaying the toast
+      router.replace(pathname);
+    }
+  }, [toast, router, pathname, toastTitle, toastMessage]);
+
   return (
     <div>
-      <div className="flex items-center py-2 gap-2">
+      <div className="flex items-center pb-2 gap-2">
         <ActionDropdown
           discs={table
             .getFilteredSelectedRowModel()
@@ -112,13 +135,14 @@ export function DataTable<TData extends Disc, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No results
                 </TableCell>
               </TableRow>
             }
           </TableBody>
         </Table>
       </div>
+      <DataTablePagination table={table} />
     </div>
   );
 }

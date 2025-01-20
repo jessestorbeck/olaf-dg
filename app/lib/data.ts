@@ -46,10 +46,7 @@ export async function fetchCardData() {
   }
 }
 
-const ITEMS_PER_PAGE = 10;
-export async function fetchFilteredDiscs(query: string, currentPage: number) {
-  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
-
+export async function fetchFilteredDiscs(query: string) {
   try {
     const discs = await sql<Disc>`
       SELECT *
@@ -64,36 +61,12 @@ export async function fetchFilteredDiscs(query: string, currentPage: number) {
         held_until::text ILIKE ${`%${query}%`} OR
         location ILIKE ${`%${query}%`}
       ORDER BY created_at DESC
-      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
     `;
 
     return discs.rows;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch discs.");
-  }
-}
-
-export async function fetchDiscsPages(query: string) {
-  try {
-    const count = await sql`SELECT COUNT(*)
-    FROM discs
-    WHERE
-      name ILIKE ${`%${query}%`} OR
-      phone ILIKE ${`%${query}%`} OR
-      color ILIKE ${`%${query}%`} OR
-      brand ILIKE ${`%${query}%`} OR
-      plastic ILIKE ${`%${query}%`} OR
-      mold ILIKE ${`%${query}%`} OR
-      held_until::text ILIKE ${`%${query}%`} OR
-      location ILIKE ${`%${query}%`}
-  `;
-
-    const totalPages = Math.ceil(Number(count.rows[0].count) / ITEMS_PER_PAGE);
-    return totalPages;
-  } catch (error) {
-    console.error("Database Error:", error);
-    throw new Error("Failed to fetch total number of discs.");
   }
 }
 

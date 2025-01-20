@@ -1,6 +1,8 @@
+import { Metadata } from "next";
+
 import "@/app/ui/global.css";
 import { primaryFont } from "@/app/ui/fonts";
-import { Metadata } from "next";
+import { Toaster } from "@/app/ui/toaster";
 
 export const metadata: Metadata = {
   title: {
@@ -19,7 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${primaryFont.className} antialiased`}>{children}</body>
+      <body className={`${primaryFont.className} antialiased`}>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

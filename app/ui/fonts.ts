@@ -1,5 +1,4 @@
-import { Libre_Baskerville } from "next/font/google";
-import { Poppins } from "next/font/google";
+import { Libre_Baskerville, Poppins } from "next/font/google";
 
 export const logoFont = Libre_Baskerville({
   subsets: ["latin"],
