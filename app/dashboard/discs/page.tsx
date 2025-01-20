@@ -21,7 +21,9 @@ export default async function Page(props: {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || "";
 
-  const data = await fetchFilteredDiscs(query);
+  const userId = "35074acb-9121-4e31-9277-4db3241ef591";
+
+  const data = await fetchFilteredDiscs(userId, query);
 
   return (
     <div className="w-full">

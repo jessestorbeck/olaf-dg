@@ -46,20 +46,22 @@ export async function fetchCardData() {
   }
 }
 
-export async function fetchFilteredDiscs(query: string) {
+export async function fetchFilteredDiscs(userId: string, query: string) {
   try {
     const discs = await sql<Disc>`
       SELECT *
       FROM discs
       WHERE
-        name ILIKE ${`%${query}%`} OR
-        phone ILIKE ${`%${query}%`} OR
-        color ILIKE ${`%${query}%`} OR
-        brand ILIKE ${`%${query}%`} OR
-        plastic ILIKE ${`%${query}%`} OR
-        mold ILIKE ${`%${query}%`} OR
-        held_until::text ILIKE ${`%${query}%`} OR
-        location ILIKE ${`%${query}%`}
+        user_id = ${userId} AND (
+          name ILIKE ${`%${query}%`} OR
+          phone ILIKE ${`%${query}%`} OR
+          color ILIKE ${`%${query}%`} OR
+          brand ILIKE ${`%${query}%`} OR
+          plastic ILIKE ${`%${query}%`} OR
+          mold ILIKE ${`%${query}%`} OR
+          location ILIKE ${`%${query}%`} OR
+          notes ILIKE ${`%${query}%`}
+        )
       ORDER BY created_at DESC
     `;
 

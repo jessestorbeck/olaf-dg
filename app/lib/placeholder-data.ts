@@ -1,24 +1,28 @@
-// This file contains placeholder data that you'll be replacing with real data in the Data Fetching chapter:
-// https://nextjs.org/learn/dashboard-app/fetching-data
-const users = [
+import type { Disc, User } from "./definitions";
+
+type DiscSeed = Omit<
+  Disc,
+  "id" | "date" | "held_until" | "created_at" | "updated_at"
+>;
+
+const users: User[] = [
   {
-    name: "User",
-    email: "user@nextmail.com",
-    password: "123456",
-  },
-  {
+    id: "35074acb-9121-4e31-9277-4db3241ef591",
     name: "Jesse",
+    course: "Haple Mill Disc Golf",
     email: "jesse@fakedomain.com",
     password: "123456",
   },
   {
+    id: "35074acb-9121-4e31-9277-4db3241ef593",
     name: "Alexia",
+    course: "Meadowstream Farms Disc Golf",
     email: "alexia@fakedomain.com",
     password: "123456",
   },
 ];
 
-const discs = [
+const discs: DiscSeed[] = [
   {
     name: "JS",
     phone: "1111111111",
@@ -31,6 +35,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "JS",
@@ -44,6 +49,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "picked up",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "AC",
@@ -52,11 +58,12 @@ const discs = [
     brand: "Westside",
     plastic: "VIP",
     mold: "Bard",
-    date: "2024-12-16",
+    location: "Shelf 2",
     notes: "",
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "AC",
@@ -70,6 +77,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "JS",
@@ -83,6 +91,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "JS",
@@ -96,6 +105,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "picked up",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "AC",
@@ -109,6 +119,7 @@ const discs = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
   },
   {
     name: "AC",
@@ -122,6 +133,119 @@ const discs = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+  },
+  {
+    name: "JS",
+    phone: "1111111111",
+    color: "blue",
+    brand: "Innova",
+    plastic: "Star",
+    mold: "Destroyer",
+    location: "Shelf 1",
+    notes: "Jesse's favorite disc",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "JS",
+    phone: "1111111111",
+    color: "red",
+    brand: "MVP",
+    plastic: "Fission",
+    mold: "Wave",
+    location: "Shelf 1",
+    notes: "",
+    notified: false,
+    reminded: false,
+    status: "picked up",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "AC",
+    phone: "2222222222",
+    color: "yellow",
+    brand: "Westside",
+    plastic: "VIP",
+    mold: "Bard",
+    location: "Shelf 2",
+    notes: "",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "AC",
+    phone: "2222222222",
+    color: "pink",
+    brand: "Innova",
+    plastic: "Champion",
+    mold: "Teebird",
+    location: "Shelf 2",
+    notes: "Alexia's favorite disc",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "JS",
+    phone: "1111111111",
+    color: "blue",
+    brand: "Innova",
+    plastic: "Star",
+    mold: "Destroyer",
+    location: "Shelf 1",
+    notes: "Jesse's favorite disc",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "JS",
+    phone: "1111111111",
+    color: "red",
+    brand: "MVP",
+    plastic: "Fission",
+    mold: "Wave",
+    location: "Shelf 1",
+    notes: "",
+    notified: false,
+    reminded: false,
+    status: "picked up",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "AC",
+    phone: "2222222222",
+    color: "yellow",
+    brand: "Westside",
+    plastic: "VIP",
+    mold: "Bard",
+    location: "Shelf 2",
+    notes: "",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+  },
+  {
+    name: "AC",
+    phone: "2222222222",
+    color: "pink",
+    brand: "Innova",
+    plastic: "Champion",
+    mold: "Teebird",
+    location: "Shelf 2",
+    notes: "Alexia's favorite disc",
+    notified: false,
+    reminded: false,
+    status: "awaiting pickup",
+    userId: "35074acb-9121-4e31-9277-4db3241ef593",
   },
 ];
 

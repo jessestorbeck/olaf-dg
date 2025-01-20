@@ -12,6 +12,7 @@ const tooLong = { message: `Must be less than ${maxStrLen} characters` };
 
 const FormSchema = z.object({
   id: z.string().uuid(),
+  user_id: z.string().uuid(),
   name: z.string().trim().max(maxStrLen, tooLong).optional(),
   phone: z.string().regex(/^\d{10}$/, { message: "Invalid phone number" }),
   color: z.string().trim().max(maxStrLen, tooLong).optional(),
@@ -36,6 +37,7 @@ const FormSchema = z.object({
 
 const CreateDisc = FormSchema.omit({
   id: true,
+  user_id: true,
   held_until: true,
   notified: true,
   reminded: true,
@@ -43,6 +45,7 @@ const CreateDisc = FormSchema.omit({
 });
 const UpdateDisc = FormSchema.omit({
   id: true,
+  user_id: true,
   held_until: true,
   notified: true,
   reminded: true,

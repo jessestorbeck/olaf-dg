@@ -5,12 +5,14 @@
 export type User = {
   id: string;
   name: string;
+  course: string;
   email: string;
   password: string;
 };
 
 export type Disc = {
   id: string;
+  userId: string;
   name: string;
   phone: string;
   color: string;

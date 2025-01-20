@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { db } from "@vercel/postgres";
-import { discs, trends, users } from "../lib/placeholder-data";
+import { discs, trends, users } from "@/app/lib/placeholder-data";
 
 const client = await db.connect();
 
@@ -23,6 +23,7 @@ async function seedUsers() {
     CREATE TABLE IF NOT EXISTS users (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
+      course VARCHAR(255) NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW(),
@@ -43,8 +44,8 @@ async function seedUsers() {
     users.map(async (user) => {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       return client.sql`
-        INSERT INTO users (name, email, password)
-        VALUES (${user.name}, ${user.email}, ${hashedPassword})
+        INSERT INTO users (id, name, course, email, password)
+        VALUES (${user.id}, ${user.name}, ${user.course}, ${user.email}, ${hashedPassword})
         ON CONFLICT (id) DO NOTHING;
       `;
     })
@@ -71,6 +72,7 @@ async function seedDiscs() {
   await client.sql`
     CREATE TABLE IF NOT EXISTS discs (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+      user_id UUID NOT NULL REFERENCES users(id),
       name VARCHAR(255),
       phone VARCHAR(255) NOT NULL,
       color VARCHAR(255),
@@ -100,8 +102,8 @@ async function seedDiscs() {
   const insertedDiscs = await Promise.all(
     discs.map(
       (disc) => client.sql`
-        INSERT INTO discs (name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status)
-        VALUES (${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
+        INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status)
+        VALUES (${disc.userId}, ${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
         ON CONFLICT (id) DO NOTHING;
       `
     )
