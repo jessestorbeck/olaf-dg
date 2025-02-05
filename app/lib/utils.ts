@@ -6,8 +6,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatDate = (dateStr: string, locale: string = "en-US") => {
-  const date = new Date(dateStr + "Z");
+export const formatDate = (date: Date, locale: string = "en-US") => {
   const options: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "short",
@@ -17,8 +16,7 @@ export const formatDate = (dateStr: string, locale: string = "en-US") => {
   return formatter.format(date);
 };
 
-export const formatDateTime = (dateStr: string, locale: string = "en-US") => {
-  const date = new Date(dateStr + "Z");
+export const formatDateTime = (date: Date, locale: string = "en-US") => {
   const options: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "short",
@@ -30,10 +28,10 @@ export const formatDateTime = (dateStr: string, locale: string = "en-US") => {
   return formatter.format(date);
 };
 
-export const dateHasPassed = (dateStr: string) => {
+export const dateHasPassed = (date: Date | undefined) => {
   // This should work so that it only returns true
   // after the date has passed in the client timezone
-  const date = new Date(dateStr + "Z");
+  if (!date) return false;
   const today = new Date();
 
   if (today.getFullYear() > date.getFullYear()) {
@@ -50,16 +48,15 @@ export const dateHasPassed = (dateStr: string) => {
   return false;
 };
 
-export const dateIsClose = (dateStr: string) => {
+export const dateIsClose = (date: Date) => {
   // This should return false if the date has passed
   // but true if the date is within 7 days
-  if (dateHasPassed(dateStr)) {
+  if (!date || dateHasPassed(date)) {
     return false;
   } else {
-    const date = new Date(dateStr + "Z");
     const closeInterval = 7; // days
     const closeDate = new Date(date.setDate(date.getDate() - closeInterval));
-    return dateHasPassed(closeDate.toString());
+    return dateHasPassed(closeDate);
   }
 };
 
@@ -69,6 +66,78 @@ export const formatPhone = (phone: Disc["phone"]) => {
     throw new Error("Invalid phone number format; must be 10 digits");
   }
   return phone.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+};
+
+export const templateVarClasses = {
+  $name: "bg-red-500/50 rounded font-bold px-0.5",
+  $color: "bg-orange-500/50 rounded font-bold px-0.5",
+  $brand: "bg-yellow-500/50 rounded font-bold px-0.5",
+  $plastic: "bg-green-500/50 rounded font-bold px-0.5",
+  $mold: "bg-blue-500/50 rounded font-bold px-0.5",
+  $laf: "bg-indigo-500/50 rounded font-bold px-0.5",
+  $held_until: "bg-purple-500/50 rounded font-bold px-0.5",
+};
+
+export const templateVarRegex = new RegExp(
+  Object.keys(templateVarClasses)
+    .map((key) => `\\${key}`)
+    .join("|"),
+  "g"
+);
+
+export const splitTemplateContent = (
+  content: string
+): { substring: string; className: string }[] => {
+  const matchSubstrings = content.match(templateVarRegex) || [];
+  const nonMatchSubstrings = content.split(templateVarRegex);
+  const splitTemplate = [] as { substring: string; className: string }[];
+  nonMatchSubstrings.forEach((substring, index) => {
+    splitTemplate.push({ substring, className: "" });
+    if (matchSubstrings[index]) {
+      splitTemplate.push({
+        substring: matchSubstrings[index],
+        className:
+          templateVarClasses[
+            matchSubstrings[index] as keyof typeof templateVarClasses
+          ],
+      });
+    }
+  });
+  return splitTemplate;
+};
+
+export const getTemplatePreview = (templateContent: string, disc: Disc) => {
+  const splitTemplate = splitTemplateContent(templateContent);
+  return splitTemplate.map(({ substring, className }) => {
+    if (substring === "$held_until") {
+      if (disc.held_until) {
+        return {
+          substring: formatDate(disc.held_until),
+          className,
+        };
+      } else {
+        return {
+          substring: formatDate(new Date()),
+          className,
+        };
+      }
+    } else if (substring === "$mold" && !disc.mold) {
+      return {
+        substring: "disc",
+        className,
+      };
+    } else if (templateVarRegex.test(substring)) {
+      return {
+        substring: disc[substring.slice(1) as keyof Disc] as string,
+        className,
+      };
+    } else {
+      return {
+        substring,
+        className,
+      };
+    }
+  });
 };
 
 export const generateYAxis = (trends: Trends[]) => {

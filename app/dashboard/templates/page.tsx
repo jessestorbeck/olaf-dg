@@ -2,15 +2,14 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 
 import Search from "@/app/ui/search";
-import { CreateDisc } from "@/app/ui/discs/action-buttons";
+import { CreateTemplate } from "@/app/ui/templates/action-buttons";
 import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
-import { fetchFilteredDiscs } from "@/app/lib/data";
-import { columns } from "@/app/ui/discs/columns";
-import { DataTable } from "@/app/ui/discs/data-table";
+import { fetchFilteredTemplates } from "@/app/lib/data";
+import { DataTableWrapper } from "@/app/ui/templates/data-table-wrapper";
 
 export const metadata: Metadata = {
-  title: "Discs",
+  title: "Templates",
 };
 
 export default async function Page(props: {
@@ -21,20 +20,20 @@ export default async function Page(props: {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || "";
 
-  const data = await fetchFilteredDiscs(query);
+  const data = await fetchFilteredTemplates(query);
 
   return (
     <div className="w-full">
       <div className="flex w-full items-center justify-between">
-        <h1 className={`${primaryFont.className} text-2xl`}>Discs</h1>
+        <h1 className={`${primaryFont.className} text-2xl`}>Templates</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Search placeholder="Search discs..." />
-        <CreateDisc />
+        <Search placeholder="Search templates..." />
+        <CreateTemplate />
       </div>
       <Suspense fallback={<DiscsTableSkeleton />}>
         <div className="container mx-auto py-4">
-          <DataTable columns={columns} data={data} />
+          <DataTableWrapper data={data} />
         </div>
       </Suspense>
     </div>

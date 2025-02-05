@@ -1,38 +1,62 @@
-// This file contains type definitions for your data.
-// It describes the shape of the data, and what data type each property should accept.
-// For simplicity of teaching, we're manually defining these types.
-// However, these types are generated automatically if you're using an ORM such as Prisma.
+import { z } from "zod";
+
 export type User = {
   id: string;
   name: string;
-  course: string;
+  laf: string;
   email: string;
   password: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Template = {
+  id: string;
+  user_id: string;
+  type: "notification" | "reminder" | "extension";
+  name: string;
+  content: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 export type Disc = {
   id: string;
-  userId: string;
-  name: string;
+  user_id: string;
+  name?: string;
   phone: string;
-  color: string;
-  brand: string;
-  plastic: string;
-  mold: string;
-  location: string;
-  notes: string;
-  date: string;
-  held_until: string;
+  color?: string;
+  brand?: string;
+  plastic?: string;
+  mold?: string;
+  location?: string;
+  notes?: string;
   notified: boolean;
   reminded: boolean;
-  // Discs can be awaiting pickup, picked up, or archived
   status: "awaiting pickup" | "picked up" | "archived";
-  created_at: string;
-  updated_at: string;
+  laf: string;
+  notification_template: string | null;
+  notification_text: string;
+  reminder_template: string | null;
+  reminder_text: string;
+  extension_template: string | null;
+  extension_text: string;
+  held_until?: Date;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type Trends = {
   month: string;
   found: number;
   returned: number;
+};
+
+export type ToastState = {
+  errors?: z.typeToFlattenedError<number, string>;
+  toast?: {
+    title: string | null;
+    message: string | null;
+  };
 };

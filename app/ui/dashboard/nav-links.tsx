@@ -5,6 +5,7 @@ import {
   CircleStackIcon,
   UserGroupIcon,
   Cog8ToothIcon,
+  BellAlertIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,6 +20,7 @@ const links = [
     href: "/dashboard/discs",
     icon: CircleStackIcon,
   },
+  { name: "Templates", href: "/dashboard/templates", icon: BellAlertIcon },
   { name: "Players", href: "/dashboard/players", icon: UserGroupIcon },
   { name: "Settings", href: "/dashboard/settings", icon: Cog8ToothIcon },
 ];
@@ -41,7 +43,7 @@ export default function NavLinks() {
             )}
           >
             <LinkIcon
-              // Rotate database icon so it looks less database-y
+              // Rotate database icon so it looks like discs
               className={clsx("w-6", { "rotate-90": link.name === "Discs" })}
             />
             <p className="hidden md:block">{link.name}</p>

@@ -1,6 +1,6 @@
-import AddEditForm from "@/app/ui/discs/add-edit-form";
+import AddEditForm from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
-import { fetchDiscById } from "@/app/lib/data";
+import { fetchTemplateById } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
-  const [disc] = await Promise.all([fetchDiscById(id)]);
+  const [template] = await Promise.all([fetchTemplateById(id)]);
 
-  if (!disc) {
+  if (!template) {
     notFound();
   }
 
@@ -21,15 +21,15 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     <main>
       <Breadcrumbs
         breadcrumbs={[
-          { label: "Discs", href: "/dashboard/discs" },
+          { label: "Templates", href: "/dashboard/templates" },
           {
-            label: "Edit disc",
-            href: `/dashboard/discs/${id}/edit`,
+            label: "Edit template",
+            href: `/dashboard/templates/${id}/edit`,
             active: true,
           },
         ]}
       />
-      <AddEditForm mode="edit" disc={disc} />
+      <AddEditForm mode="edit" template={template} />
     </main>
   );
 }

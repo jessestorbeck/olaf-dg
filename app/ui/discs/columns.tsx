@@ -72,7 +72,7 @@ export const columns: ColumnDef<Disc>[] = [
         aria-label="Select row"
       />
     ),
-    enableSorting: true,
+    enableSorting: false,
     enableHiding: false,
   },
   {
@@ -108,10 +108,36 @@ export const columns: ColumnDef<Disc>[] = [
     header: ({ column }) => columnHeader(column, "Location"),
   },
   {
-    accessorKey: "created_at",
-    header: ({ column }) => columnHeader(column, "Date"),
+    accessorKey: "status",
+    header: ({ column }) => columnHeader(column, "Status"),
     cell: ({ row }) => {
-      const formatted = formatDate(row.getValue("created_at"));
+      const status: string = row.getValue("status");
+      if (
+        status === "awaiting pickup" &&
+        dateHasPassed(row.getValue("held_until"))
+      ) {
+        return "Abandoned";
+      } else {
+        return status.charAt(0).toUpperCase() + status.slice(1);
+      }
+    },
+    filterFn: (row: Row<Disc>, columnId: string, filterValue: string) => {
+      const status = row.getValue(columnId);
+      const transformedStatus =
+        (
+          status === "awaiting pickup" &&
+          dateHasPassed(row.getValue("held_until"))
+        ) ?
+          "abandoned"
+        : status;
+      return transformedStatus === filterValue;
+    },
+  },
+  {
+    accessorKey: "created_at",
+    header: ({ column }) => columnHeader(column, "Created at"),
+    cell: ({ row }) => {
+      const formatted = formatDateTime(row.getValue("created_at"));
       return <div>{formatted}</div>;
     },
   },
@@ -141,32 +167,6 @@ export const columns: ColumnDef<Disc>[] = [
     cell: ({ row }) => {
       const formatted = formatDateTime(row.getValue("updated_at"));
       return <div>{formatted}</div>;
-    },
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => columnHeader(column, "Status"),
-    cell: ({ row }) => {
-      const status: string = row.getValue("status");
-      if (
-        status === "awaiting pickup" &&
-        dateHasPassed(row.getValue("held_until"))
-      ) {
-        return "Abandoned";
-      } else {
-        return status.charAt(0).toUpperCase() + status.slice(1);
-      }
-    },
-    filterFn: (row: Row<Disc>, columnId: string, filterValue: string) => {
-      const status = row.getValue(columnId);
-      const transformedStatus =
-        (
-          status === "awaiting pickup" &&
-          dateHasPassed(row.getValue("held_until"))
-        ) ?
-          "abandoned"
-        : status;
-      return transformedStatus === filterValue;
     },
   },
   {

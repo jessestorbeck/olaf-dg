@@ -1,5 +1,10 @@
+"use server";
+
 import { sql } from "@vercel/postgres";
-import { Disc, Trends } from "./definitions";
+import { Disc, Template, Trends } from "./definitions";
+
+// Placeholder until I rework auth
+const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
 
 export async function fetchTrends() {
   try {
@@ -14,8 +19,9 @@ export async function fetchTrends() {
 export async function fetchLatestDiscs() {
   try {
     const data = await sql<Disc>`
-      SELECT name, phone, id, color, brand, plastic, mold, created_at
+      SELECT name, phone, color, brand, plastic, mold
       FROM discs
+      WHERE user_id = ${user_id}
       ORDER BY created_at DESC
       LIMIT 5`;
 
@@ -28,11 +34,14 @@ export async function fetchLatestDiscs() {
 
 export async function fetchCardData() {
   try {
-    // You can probably combine these into a single SQL query
-    // However, we are intentionally splitting them to demonstrate
-    // how to initialize multiple queries in parallel with JS.
-    const discCountPromise = sql`SELECT COUNT(*) FROM discs`;
-    const playerCountPromise = sql`SELECT COUNT(DISTINCT phone) FROM discs`;
+    const discCountPromise = sql`
+      SELECT COUNT(*)
+      FROM discs
+      WHERE user_id = ${user_id}`;
+    const playerCountPromise = sql`
+      SELECT COUNT(DISTINCT phone)
+      FROM discs
+      WHERE user_id = ${user_id}`;
 
     const data = await Promise.all([discCountPromise, playerCountPromise]);
 
@@ -46,13 +55,13 @@ export async function fetchCardData() {
   }
 }
 
-export async function fetchFilteredDiscs(userId: string, query: string) {
+export async function fetchFilteredDiscs(query: string) {
   try {
     const discs = await sql<Disc>`
       SELECT *
       FROM discs
       WHERE
-        user_id = ${userId} AND (
+        user_id = ${user_id} AND (
           name ILIKE ${`%${query}%`} OR
           phone ILIKE ${`%${query}%`} OR
           color ILIKE ${`%${query}%`} OR
@@ -68,7 +77,7 @@ export async function fetchFilteredDiscs(userId: string, query: string) {
     return discs.rows;
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch discs.");
+    throw new Error("Failed to fetch discs");
   }
 }
 
@@ -77,12 +86,47 @@ export async function fetchDiscById(id: string) {
     const data = await sql<Disc>`
       SELECT *
       FROM discs
-      WHERE id = ${id};
+      WHERE id = ${id} AND user_id = ${user_id};
     `;
 
     return data.rows[0];
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch disc.");
+    throw new Error("Failed to fetch disc");
+  }
+}
+
+export async function fetchFilteredTemplates(query: string) {
+  try {
+    const templates = await sql<Template>`
+      SELECT *
+      FROM templates
+      WHERE
+        user_id = ${user_id} AND (
+          name ILIKE ${`%${query}%`} OR
+          content ILIKE ${`%${query}%`}
+        )
+      ORDER BY is_default DESC, created_at DESC
+    `;
+
+    return templates.rows;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch templates");
+  }
+}
+
+export async function fetchTemplateById(id: string) {
+  try {
+    const template = await sql<Template>`
+      SELECT *
+      FROM templates
+      WHERE id = ${id} AND user_id = ${user_id};
+    `;
+
+    return template.rows[0];
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch template");
   }
 }

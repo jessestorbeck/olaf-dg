@@ -1,9 +1,9 @@
-import AddEditForm from "@/app/ui/discs/add-edit-form";
+import AddEditForm from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Add disc",
+  title: "Add Template",
 };
 
 export default async function Page() {
@@ -11,10 +11,10 @@ export default async function Page() {
     <main>
       <Breadcrumbs
         breadcrumbs={[
-          { label: "Discs", href: "/dashboard/discs" },
+          { label: "Templates", href: "/dashboard/templates" },
           {
-            label: "Add disc",
-            href: "/dashboard/discs/add",
+            label: "Add template",
+            href: "/dashboard/templates/add",
             active: true,
           },
         ]}

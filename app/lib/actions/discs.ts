@@ -4,8 +4,11 @@ import { z } from "zod";
 import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { signIn } from "@/auth";
-import { AuthError } from "next-auth";
+
+import { ToastState } from "@/app/lib/definitions";
+
+// Placeholder until I rework auth
+const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
 
 const maxStrLen = 50;
 const tooLong = { message: `Must be less than ${maxStrLen} characters` };
@@ -53,7 +56,7 @@ const UpdateDisc = FormSchema.omit({
   addAnother: true,
 });
 
-export type State = {
+export type addEditState = {
   formData?: {
     name?: string;
     phone?: string;
@@ -79,13 +82,13 @@ export type State = {
     status?: string[];
     addAnother?: string[];
   };
-  message?: string | null;
+  toast?: ToastState["toast"];
 };
 
 export async function createDisc(
-  prevState: State,
+  prevState: addEditState,
   formData: FormData
-): Promise<State> {
+): Promise<addEditState> {
   const validatedFields = CreateDisc.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -102,7 +105,10 @@ export async function createDisc(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing required fields; failed to create disc",
+      toast: {
+        title: "Error: failed to create disc",
+        message: "Required field(s) missing",
+      },
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -127,26 +133,35 @@ export async function createDisc(
   // Insert data into the database
   try {
     await sql`
-      INSERT INTO discs (name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status, held_until)
-      VALUES (${name}, ${phone}, ${color}, ${brand}, ${plastic}, ${mold}, ${location}, ${notes}, ${notified}, ${reminded}, ${status}, ${held_until})
+      INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status, held_until)
+      VALUES (${user_id}, ${name}, ${phone}, ${color}, ${brand}, ${plastic}, ${mold}, ${location}, ${notes}, ${notified}, ${reminded}, ${status}, ${held_until})
     `;
   } catch (error) {
     console.error("Database error: failed to create disc", error);
     // If a database error occurs, return a more specific error
     return {
-      message: "Database error: failed to create disc",
+      toast: {
+        title: "Database error",
+        message: "Failed to create disc",
+      },
+      formData: Object.fromEntries(formData),
     };
   }
   const discString = [color, brand, plastic, mold || "disc"]
     .filter(Boolean)
     .join(" ");
-  const successMessage = `Added a new ${discString} to your inventory`;
-  // Title for the toast notification after redirect
   const toastTitle = "Disc added!";
+  const successMessage = `Added a new ${discString} to your inventory`;
 
   if (addAnother) {
     // If user wants to add another, don't redirect and clear the form
-    return { message: successMessage, formData: {} };
+    return {
+      toast: {
+        title: toastTitle,
+        message: successMessage,
+      },
+      formData: {},
+    };
   }
   // Revalidate the cache for the discs page and redirect the user
   revalidatePath("/dashboard/discs");
@@ -158,9 +173,9 @@ export async function createDisc(
 
 export async function updateDisc(
   id: string,
-  prevState: State,
+  prevState: addEditState,
   formData: FormData
-): Promise<State> {
+): Promise<addEditState> {
   const validatedFields = UpdateDisc.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
@@ -175,7 +190,10 @@ export async function updateDisc(
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing required fields; failed to update disc",
+      toast: {
+        title: "Error: failed to update disc",
+        message: "Required field(s) missing",
+      },
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -188,11 +206,17 @@ export async function updateDisc(
     await sql`
       UPDATE discs
       SET name = ${name}, phone = ${phone}, color = ${color}, brand = ${brand}, plastic = ${plastic}, mold = ${mold}, location = ${location}, notes = ${notes}
-      WHERE id = ${id}
+      WHERE id = ${id} AND user_id = ${user_id}
     `;
   } catch (error) {
     console.error("Database error: failed to update disc", error);
-    return { message: "Database error: failed to update disc" };
+    return {
+      toast: {
+        title: "Database error",
+        message: "Failed to update disc",
+      },
+      formData: Object.fromEntries(formData),
+    };
   }
   const discString = [color, brand, plastic, mold || "disc"]
     .filter(Boolean)
@@ -207,20 +231,12 @@ export async function updateDisc(
   );
 }
 
-export type ToastState = {
-  errors?: z.typeToFlattenedError<number, string>;
-  toast?: {
-    title: string | null;
-    message: string | null;
-  };
-};
-
 export async function notifyOwners(ids: string[]): Promise<ToastState> {
   try {
     await sql`
       UPDATE discs
       SET notified = TRUE, held_until = NOW() + INTERVAL '60 days'
-      WHERE id = ANY(${Object.assign(ids)})
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
     `;
     revalidatePath("/dashboard/discs");
     return {
@@ -242,7 +258,11 @@ export async function notifyOwners(ids: string[]): Promise<ToastState> {
 
 export async function remindOwners(ids: string[]): Promise<ToastState> {
   try {
-    await sql`UPDATE discs SET reminded = TRUE WHERE id = ANY(${Object.assign(ids)})`;
+    await sql`
+      UPDATE discs
+      SET reminded = TRUE
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
+    `;
     revalidatePath("/dashboard/discs");
     return {
       toast: {
@@ -276,7 +296,7 @@ export async function addTimeToDiscs(
     return {
       errors: validDays.error.flatten(),
       toast: {
-        title: "Invalid days",
+        title: "Error: invalid days",
         message: "Days must be a positive whole number <= 365",
       },
     };
@@ -285,7 +305,7 @@ export async function addTimeToDiscs(
     await sql`
       UPDATE discs
       SET held_until = held_until + INTERVAL '1 day' * ${validDays.data}
-      WHERE id = ANY(${Object.assign(ids)})
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
     `;
     revalidatePath("/dashboard/discs");
     return {
@@ -307,7 +327,11 @@ export async function addTimeToDiscs(
 
 export async function discsPickedUp(ids: string[]): Promise<ToastState> {
   try {
-    await sql`UPDATE discs SET status = 'picked up' WHERE id = ANY(${Object.assign(ids)})`;
+    await sql`
+      UPDATE discs
+      SET status = 'picked up'
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
+    `;
     revalidatePath("/dashboard/discs");
     return {
       toast: {
@@ -328,7 +352,11 @@ export async function discsPickedUp(ids: string[]): Promise<ToastState> {
 
 export async function archiveDiscs(ids: string[]): Promise<ToastState> {
   try {
-    await sql`UPDATE discs SET status = 'archived' WHERE id = ANY(${Object.assign(ids)})`;
+    await sql`
+      UPDATE discs
+      SET status = 'archived'
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
+    `;
     revalidatePath("/dashboard/discs");
     return {
       toast: {
@@ -349,7 +377,11 @@ export async function archiveDiscs(ids: string[]): Promise<ToastState> {
 
 export async function restoreDiscs(ids: string[]): Promise<ToastState> {
   try {
-    await sql`UPDATE discs SET status = 'awaiting pickup' WHERE id = ANY(${Object.assign(ids)})`;
+    await sql`
+      UPDATE discs
+      SET status = 'awaiting pickup'
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
+    `;
     revalidatePath("/dashboard/discs");
     return {
       toast: {
@@ -370,7 +402,10 @@ export async function restoreDiscs(ids: string[]): Promise<ToastState> {
 
 export async function deleteDiscs(ids: string[]): Promise<ToastState> {
   try {
-    await sql`DELETE FROM discs WHERE id = ANY(${Object.assign(ids)})`;
+    await sql`
+      DELETE FROM discs
+      WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
+    `;
     revalidatePath("/dashboard/discs");
     return {
       toast: {
@@ -386,24 +421,5 @@ export async function deleteDiscs(ids: string[]): Promise<ToastState> {
         message: "Database error: failed to delete discs",
       },
     };
-  }
-}
-
-export async function authenticate(
-  prevState: string | undefined,
-  formData: FormData
-) {
-  try {
-    await signIn("credentials", formData);
-  } catch (error) {
-    if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return "Invalid credentials.";
-        default:
-          return "Something went wrong.";
-      }
-    }
-    throw error;
   }
 }

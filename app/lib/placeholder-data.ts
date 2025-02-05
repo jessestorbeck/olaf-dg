@@ -1,24 +1,53 @@
-import type { Disc, User } from "./definitions";
+import type { Disc, User, Template } from "./definitions";
 
-type DiscSeed = Omit<
-  Disc,
-  "id" | "date" | "held_until" | "created_at" | "updated_at"
->;
+type UserSeed = Omit<User, "created_at" | "updated_at">;
+type TemplateSeed = Omit<Template, "id" | "created_at" | "updated_at">;
+type DiscSeed = Omit<Disc, "id" | "laf" | "created_at" | "updated_at">;
 
-const users: User[] = [
+const users: UserSeed[] = [
   {
     id: "35074acb-9121-4e31-9277-4db3241ef591",
     name: "Jesse",
-    course: "Haple Mill Disc Golf",
+    laf: "Haple Mill Disc Golf",
     email: "jesse@fakedomain.com",
     password: "123456",
   },
   {
     id: "35074acb-9121-4e31-9277-4db3241ef593",
     name: "Alexia",
-    course: "Meadowstream Farms Disc Golf",
+    laf: "Meadowstream Farms Disc Golf",
     email: "alexia@fakedomain.com",
     password: "123456",
+  },
+];
+
+const templates: TemplateSeed[] = [
+  {
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    name: "Jesse's Notification Template",
+    type: "notification",
+    content: `Hi, $name! Your $color $brand $plastic $mold has been found at $laf.
+      Please pick it up during regular business hours.
+      Your disc will be held until $held_until.`,
+    is_default: true,
+  },
+  {
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    name: "Jesse's Reminder Template",
+    type: "reminder",
+    content: `Hi, $name! Your $color $brand $plastic $mold is still at $laf.
+      Please pick it up during regular business hours.
+      Your disc will be held until $held_until.`,
+    is_default: true,
+  },
+  {
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    name: "Jesse's Extension Template",
+    type: "extension",
+    content: `Hi, $name! The pick-up date for your $color $brand $plastic $mold has been extended.
+      $laf will now hold your disc until $held_until.
+      Please pick it up during regular business hours.`,
+    is_default: true,
   },
 ];
 
@@ -35,7 +64,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -49,7 +84,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "picked up",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -63,7 +104,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -77,7 +124,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -91,7 +144,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -105,7 +164,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "picked up",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -119,7 +184,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -133,7 +204,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef591",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -147,7 +224,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -161,7 +244,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "picked up",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -175,7 +264,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -189,7 +284,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -203,7 +304,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "JS",
@@ -217,7 +324,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "picked up",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -231,7 +344,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
   {
     name: "AC",
@@ -245,7 +364,13 @@ const discs: DiscSeed[] = [
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    userId: "35074acb-9121-4e31-9277-4db3241ef593",
+    user_id: "35074acb-9121-4e31-9277-4db3241ef593",
+    notification_template: null,
+    notification_text: "seed",
+    reminder_template: null,
+    reminder_text: "seed",
+    extension_template: null,
+    extension_text: "seed",
   },
 ];
 
@@ -264,4 +389,4 @@ const trends = [
   { month: "Dec", found: 19, returned: 20 },
 ];
 
-export { users, discs, trends };
+export { users, templates, discs, trends };

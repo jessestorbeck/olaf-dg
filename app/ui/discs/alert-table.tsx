@@ -5,7 +5,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/app/ui/discs/table";
+} from "@/app/ui/table";
 import { Disc } from "@/app/lib/definitions";
 import { formatPhone } from "@/app/lib/utils";
 

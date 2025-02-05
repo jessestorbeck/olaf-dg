@@ -5,19 +5,29 @@ import Link from "next/link";
 
 import { Button } from "@/app/ui/button";
 import { useToast } from "@/app/hooks/use-toast";
-import { createDisc, State } from "@/app/lib/actions";
-import { fields } from "./fields";
+import { createDisc, updateDisc, addEditState } from "@/app/lib/actions/discs";
+import { fields } from "./add-edit-fields";
+import { Disc } from "@/app/lib/definitions";
 
-export default function AddForm() {
-  const initialState: State = { message: null };
-  const [state, formAction, pending] = useActionState(createDisc, initialState);
+type AddEditFormProps =
+  | { mode: "add"; disc?: undefined }
+  | { mode: "edit"; disc: Disc };
+
+export default function AddEditForm({ mode, disc }: AddEditFormProps) {
+  const initialState: addEditState = { formData: disc };
+  const addEditAction =
+    mode === "add" ? createDisc : updateDisc.bind(null, disc.id);
+  const [state, formAction, pending] = useActionState(
+    addEditAction,
+    initialState
+  );
 
   const { toast } = useToast();
   useEffect(() => {
-    if (state.message !== null) {
+    if (state.toast) {
       toast({
-        title: state.errors ? "Something went wrong!" : "Disc added!",
-        description: state.message,
+        title: state.toast.title || "",
+        description: state.toast.message || "",
       });
     }
   }, [state, toast]);
@@ -90,21 +100,27 @@ export default function AddForm() {
         <Button variant="outline">
           <Link href="/dashboard/discs">Cancel</Link>
         </Button>
-        <Button variant="outline" type="submit" disabled={pending}>
-          Save and close
-        </Button>
         <Button
+          variant={mode === "add" ? "outline" : "default"}
           type="submit"
-          onClick={() => {
-            const addAnother = document.querySelector(
-              'input[id="addAnother"]'
-            ) as HTMLInputElement;
-            addAnother.value = "true";
-          }}
           disabled={pending}
         >
-          Save and add another
+          Save {mode === "add" ? "and close" : "changes"}
         </Button>
+        {mode === "add" && (
+          <Button
+            type="submit"
+            onClick={() => {
+              const addAnother = document.querySelector(
+                'input[id="addAnother"]'
+              ) as HTMLInputElement;
+              addAnother.value = "true";
+            }}
+            disabled={pending}
+          >
+            Save and add another
+          </Button>
+        )}
       </div>
     </form>
   );

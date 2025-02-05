@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { db } from "@vercel/postgres";
-import { discs, trends, users } from "@/app/lib/placeholder-data";
+import { users, templates, discs, trends } from "@/app/lib/placeholder-data";
 
 const client = await db.connect();
 
@@ -23,7 +23,7 @@ async function seedUsers() {
     CREATE TABLE IF NOT EXISTS users (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
-      course VARCHAR(255) NOT NULL,
+      laf VARCHAR(255) NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW(),
@@ -44,14 +44,64 @@ async function seedUsers() {
     users.map(async (user) => {
       const hashedPassword = await bcrypt.hash(user.password, 10);
       return client.sql`
-        INSERT INTO users (id, name, course, email, password)
-        VALUES (${user.id}, ${user.name}, ${user.course}, ${user.email}, ${hashedPassword})
+        INSERT INTO users (id, name, laf, email, password)
+        VALUES (${user.id}, ${user.name}, ${user.laf}, ${user.email}, ${hashedPassword})
         ON CONFLICT (id) DO NOTHING;
       `;
     })
   );
 
   return insertedUsers;
+}
+
+async function seedTemplates() {
+  await client.sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+
+  // Create the trigger function
+  await client.sql`
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+  `;
+
+  // Create the templates table
+  await client.sql`
+    CREATE TABLE IF NOT EXISTS templates (
+      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      type VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      is_default BOOLEAN NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW(),
+      updated_at TIMESTAMP DEFAULT NOW()
+    );
+  `;
+
+  // Create the trigger
+  await client.sql`
+    CREATE TRIGGER update_templates_updated_at
+    BEFORE UPDATE ON templates
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  `;
+
+  // Insert the seed templates
+  const insertedTemplates = await Promise.all(
+    templates.map(
+      (template) => client.sql`
+        INSERT INTO templates (user_id, name, type, content, is_default)
+        VALUES (${template.user_id}, ${template.name}, ${template.type}, ${template.content}, ${template.is_default})
+        ON CONFLICT (id) DO NOTHING;
+      `
+    )
+  );
+
+  return insertedTemplates;
 }
 
 async function seedDiscs() {
@@ -72,7 +122,7 @@ async function seedDiscs() {
   await client.sql`
     CREATE TABLE IF NOT EXISTS discs (
       id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-      user_id UUID NOT NULL REFERENCES users(id),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       name VARCHAR(255),
       phone VARCHAR(255) NOT NULL,
       color VARCHAR(255),
@@ -85,6 +135,12 @@ async function seedDiscs() {
       reminded BOOLEAN NOT NULL,
       status VARCHAR(255) NOT NULL,
       held_until TIMESTAMP,
+      notification_template UUID REFERENCES templates(id) ON DELETE SET NULL,
+      notification_text TEXT NOT NULL,
+      reminder_template UUID REFERENCES templates(id) ON DELETE SET NULL,
+      reminder_text TEXT NOT NULL,
+      extension_template UUID REFERENCES templates(id) ON DELETE SET NULL,
+      extension_text TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
     );
@@ -102,8 +158,8 @@ async function seedDiscs() {
   const insertedDiscs = await Promise.all(
     discs.map(
       (disc) => client.sql`
-        INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status)
-        VALUES (${disc.userId}, ${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status})
+        INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status, notification_template, notification_text, reminder_template, reminder_text, extension_template, extension_text)
+        VALUES (${disc.user_id}, ${disc.name}, ${disc.phone}, ${disc.color}, ${disc.brand}, ${disc.plastic}, ${disc.mold}, ${disc.location}, ${disc.notes}, ${disc.notified}, ${disc.reminded}, ${disc.status}, ${disc.notification_template}, ${disc.notification_text}, ${disc.reminder_template}, ${disc.reminder_text}, ${disc.extension_template}, ${disc.extension_text})
         ON CONFLICT (id) DO NOTHING;
       `
     )
@@ -150,6 +206,7 @@ export async function GET() {
     await client.sql`BEGIN`;
     console.log("Seeding database");
     await seedUsers();
+    await seedTemplates();
     await seedDiscs();
     await seedTrends();
     await client.sql`COMMIT`;

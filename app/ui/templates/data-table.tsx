@@ -25,17 +25,20 @@ import {
   TableRow,
 } from "@/app/ui/table";
 import { DataTablePagination } from "@/app/ui/data-table-pagination";
-import { DiscFilter } from "./disc-filter";
 import { ColumnVisibility } from "@/app/ui/column-visibility";
-import { Disc } from "@/app/lib/definitions";
+import { Disc, Template } from "@/app/lib/definitions";
 import { ActionDropdown } from "./action-dropdown";
+import { PreviewDiscPopover } from "./preview-disc-popover";
+import { TemplateFilter } from "./template-filter";
 
-interface DataTableProps<TData extends Disc, TValue> {
+interface DataTableProps<TData extends Template, TValue> {
+  previewDiscState: [Disc, (disc: Disc) => void];
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData extends Disc, TValue>({
+export function DataTable<TData extends Template, TValue>({
+  previewDiscState,
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
@@ -62,7 +65,7 @@ export function DataTable<TData extends Disc, TValue>({
   });
 
   // This is only for toast notifications after navigation,
-  // i.e., after updating a disc or creating a disc with the "Save and close" button.
+  // i.e., after updating a template or creating a template with the "Save and close" button.
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const toastTitle = searchParams.get("title");
@@ -83,16 +86,17 @@ export function DataTable<TData extends Disc, TValue>({
 
   return (
     <div>
-      <div className="flex items-center pb-2 gap-2">
+      <div className="flex pb-2 gap-2">
         <ActionDropdown
-          discs={table
+          templates={table
             .getFilteredSelectedRowModel()
             .rows.map((row) => row.original)}
-          totalDiscs={table.getFilteredRowModel().rows.length}
+          totalTemplates={table.getFilteredRowModel().rows.length}
           actionSet="selected"
         />
-        <DiscFilter table={table} />
-        <div className="ml-auto">
+        <TemplateFilter table={table} />
+        <div className="flex gap-2 ml-auto">
+          <PreviewDiscPopover previewDiscState={previewDiscState} />
           <ColumnVisibility table={table} />
         </div>
       </div>

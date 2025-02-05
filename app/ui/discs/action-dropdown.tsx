@@ -42,8 +42,8 @@ import {
   archiveDiscs,
   restoreDiscs,
   deleteDiscs,
-  ToastState,
-} from "@/app/lib/actions";
+} from "@/app/lib/actions/discs";
+import { ToastState } from "@/app/lib/definitions";
 import { dateHasPassed } from "@/app/lib/utils";
 import { Disc } from "@/app/lib/definitions";
 
@@ -119,7 +119,7 @@ export function ActionDropdown({
       const result = await notifyOwnersWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to notify owners", error);
+      console.error("Failed to notify owners:", error);
     }
   };
   const handleRemind = async () => {
@@ -129,7 +129,7 @@ export function ActionDropdown({
       const result = await remindOwnersWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to remind owners", error);
+      console.error("Failed to remind owners:", error);
     }
   };
   const handleAddTime = async () => {
@@ -145,7 +145,7 @@ export function ActionDropdown({
         setAddTimeDialogOpen(false);
       }
     } catch (error) {
-      console.error("Failed to add time to discs", error);
+      console.error("Failed to add time to discs:", error);
     } finally {
       setPending(false);
     }
@@ -157,7 +157,7 @@ export function ActionDropdown({
       const result = await discsPickedUpWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to pick up discs", error);
+      console.error("Failed to pick up discs:", error);
     }
   };
   const handleArchive = async () => {
@@ -167,7 +167,7 @@ export function ActionDropdown({
       const result = await archiveDiscsWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to archive discs", error);
+      console.error("Failed to archive discs:", error);
     }
   };
   const handleRestore = async () => {
@@ -177,7 +177,7 @@ export function ActionDropdown({
       const result = await restoreDiscsWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to restore discs", error);
+      console.error("Failed to restore discs:", error);
     }
   };
   const handleDelete = async () => {
@@ -189,7 +189,7 @@ export function ActionDropdown({
       setState(result);
       setDeleteDialogOpen(false);
     } catch (error) {
-      console.error("Failed to delete discs", error);
+      console.error("Failed to delete discs:", error);
     } finally {
       setPending(false);
     }
@@ -311,6 +311,7 @@ export function ActionDropdown({
               <DropdownMenuItem>
                 <UpdateDisc id={discs[0].id} />
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
             </div>
           )}
           <DropdownMenuItem

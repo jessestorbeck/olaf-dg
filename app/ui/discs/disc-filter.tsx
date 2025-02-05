@@ -10,13 +10,11 @@ import {
   SelectValue,
 } from "@/app/ui/select";
 
-interface DiscStatusFilterProps<TData> {
+interface DiscFilterProps<TData> {
   table: Table<TData>;
 }
 
-export function DiscStatusFilter<TData>({
-  table,
-}: DiscStatusFilterProps<TData>) {
+export function DiscFilter<TData>({ table }: DiscFilterProps<TData>) {
   return (
     <Select
       onValueChange={(value) =>

@@ -20,28 +20,28 @@ export function ColumnVisibility<TData>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="ml-auto">
-          Columns
-        </Button>
+        <Button variant="outline">Columns</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {table
           .getAllColumns()
           .filter((column) => column.getCanHide())
           .map((column) => {
-            let columnId =
-              column.id === "created_at" ?
-                "date"
-              : column.id.replace(/_/g, " ");
-            // Sentence case column names
-            columnId = columnId.charAt(0).toUpperCase() + columnId.slice(1);
+            const colName = column.id
+              .replace(/is_/g, "") // Remove is_ prefix (for is_default template column)
+              .replace(/_/g, " "); // Replace remaining underscores with spaces
+            const colNameFormatted = colName
+              // Sentence case the column name
+              .charAt(0)
+              .toUpperCase()
+              .concat(colName.slice(1));
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {columnId}
+                {colNameFormatted}
               </DropdownMenuCheckboxItem>
             );
           })}
