@@ -2,6 +2,7 @@
 
 import { sql } from "@vercel/postgres";
 import { Disc, Template, Trends } from "./definitions";
+import { dateHasPassed } from "./utils";
 
 // Placeholder until I rework auth
 const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
@@ -34,21 +35,42 @@ export async function fetchLatestDiscs() {
 
 export async function fetchCardData() {
   try {
-    const discCountPromise = sql`
+    const totaldiscsPromise = sql`
       SELECT COUNT(*)
       FROM discs
-      WHERE user_id = ${user_id}`;
+      WHERE user_id = ${user_id} AND status <> 'archived'`;
+
+    const awaitingPickupPromise = sql`
+      SELECT *
+      FROM discs
+      WHERE user_id = ${user_id} AND status = 'awaiting pickup'`;
+
     const playerCountPromise = sql`
       SELECT COUNT(DISTINCT phone)
       FROM discs
       WHERE user_id = ${user_id}`;
 
-    const data = await Promise.all([discCountPromise, playerCountPromise]);
+    const data = await Promise.all([
+      totaldiscsPromise,
+      awaitingPickupPromise,
+      playerCountPromise,
+    ]);
 
-    const numberOfDiscs = Number(data[0].rows[0].count ?? "0");
-    const numberOfPlayers = Number(data[1].rows[0].count ?? "0");
+    const totalDiscs = Number(data[0].rows[0].count ?? "0");
+    const totalDiscsAwaitingPickup = data[1].rows.filter(
+      (disc) => !dateHasPassed(disc.held_until)
+    ).length;
+    const totalDiscsAbandoned = data[1].rows.filter((disc) =>
+      dateHasPassed(disc.held_until)
+    ).length;
+    const totalPlayers = Number(data[2].rows[0].count ?? "0");
 
-    return { numberOfPlayers, numberOfDiscs };
+    return {
+      totalDiscs,
+      totalDiscsAwaitingPickup,
+      totalDiscsAbandoned,
+      totalPlayers,
+    };
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch card data.");
