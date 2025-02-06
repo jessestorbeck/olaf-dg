@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
 
-import Search from "@/app/ui/search";
+import { SearchBar } from "@/app/ui/search-bar";
 import { CreateTemplate } from "@/app/ui/templates/action-buttons";
 import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
@@ -28,7 +28,7 @@ export default async function Page(props: {
         <h1 className={`${primaryFont.className} text-2xl`}>Templates</h1>
       </div>
       <div className="mt-4 flex items-center justify-between gap-2">
-        <Search placeholder="Search templates..." />
+        <SearchBar placeholder="Search templates..." />
         <CreateTemplate />
       </div>
       <Suspense fallback={<DiscsTableSkeleton />}>

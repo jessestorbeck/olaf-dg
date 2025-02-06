@@ -5,13 +5,13 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
-  Clock,
-  Bell,
-  BellPlus,
-  Smile,
+  AwaitingPickup,
+  Notify,
+  Remind,
+  PickedUp,
   Archive,
-  CircleHelp,
-} from "lucide-react";
+  Abandoned,
+} from "@/app/ui/icons";
 import clsx from "clsx";
 
 import { Disc } from "@/app/lib/definitions";
@@ -180,13 +180,13 @@ export const columns: ColumnDef<Disc>[] = [
             <Tooltip>
               <TooltipTrigger className="cursor-default">
                 {!disc.reminded && (
-                  <Bell
+                  <Notify
                     className={clsx("w-5", {
                       "text-gray-400": !disc.notified,
                     })}
                   />
                 )}
-                {disc.reminded && <BellPlus className="w-5" />}
+                {disc.reminded && <Remind className="w-5" />}
               </TooltipTrigger>
               <TooltipContent>
                 {!disc.notified && <p>Not notified</p>}
@@ -199,11 +199,13 @@ export const columns: ColumnDef<Disc>[] = [
             <Tooltip>
               <TooltipTrigger className="cursor-default">
                 {disc.status === "awaiting pickup" &&
-                  !dateHasPassed(disc.held_until) && <Clock className="w-5" />}
-                {disc.status === "picked up" && <Smile className="w-5" />}
+                  !dateHasPassed(disc.held_until) && (
+                    <AwaitingPickup className="w-5" />
+                  )}
+                {disc.status === "picked up" && <PickedUp className="w-5" />}
                 {disc.status === "awaiting pickup" &&
                   dateHasPassed(disc.held_until) && (
-                    <CircleHelp className="w-5" />
+                    <Abandoned className="w-5" />
                   )}
                 {disc.status === "archived" && <Archive className="w-5" />}
               </TooltipTrigger>

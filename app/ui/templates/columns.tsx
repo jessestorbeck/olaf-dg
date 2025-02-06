@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Column, ColumnDef } from "@tanstack/react-table";
-import { ArrowUp, ArrowDown, ArrowUpDown, Star } from "lucide-react";
 import clsx from "clsx";
 
 import {
@@ -18,6 +17,12 @@ import {
   getTemplatePreview,
 } from "@/app/lib/utils";
 import { Checkbox } from "@/app/ui/checkbox";
+import {
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
+  DefaultTemplate,
+} from "@/app/ui/icons";
 import { ActionDropdown } from "./action-dropdown";
 
 const PreviewCell = ({
@@ -144,7 +149,7 @@ export function columns(previewDisc: Disc): ColumnDef<Template>[] {
               <Tooltip>
                 <TooltipTrigger className="cursor-default">
                   {value ?
-                    <Star className="text-primary h-5 w-5" />
+                    <DefaultTemplate className="text-primary h-5 w-5" />
                   : ""}
                 </TooltipTrigger>
                 {value && (

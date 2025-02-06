@@ -1,15 +1,15 @@
 import {
-  Pencil,
-  Plus,
-  Trash2,
-  Bell,
-  BellPlus,
-  Smile,
+  Edit,
+  Add,
+  Delete,
+  Notify,
+  Remind,
+  PickedUp,
   Archive,
-  Eye,
-  History,
-  Hourglass,
-} from "lucide-react";
+  View,
+  Restore,
+  AddTime,
+} from "@/app/ui/icons";
 import Link from "next/link";
 
 import { Button } from "@/app/ui/button";
@@ -19,7 +19,7 @@ export function CreateDisc() {
     <Button>
       <Link className="flex items-center" href="/dashboard/discs/add">
         <span className="hidden md:block">Add disc</span>{" "}
-        <Plus className="h-5 md:ml-2" aria-hidden="true" />
+        <Add className="h-5 md:ml-2" aria-hidden="true" />
       </Link>
     </Button>
   );
@@ -28,7 +28,7 @@ export function CreateDisc() {
 export function NotifyOwners({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center">
-      <Bell className="w-5 mr-2" aria-hidden="true" />
+      <Notify className="w-5 mr-2" aria-hidden="true" />
       Notify{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );
@@ -37,7 +37,7 @@ export function NotifyOwners({ quantity }: { quantity?: number }) {
 export function RemindOwners({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center">
-      <BellPlus className="w-5 mr-2" aria-hidden="true" />
+      <Remind className="w-5 mr-2" aria-hidden="true" />
       Remind{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );
@@ -46,7 +46,7 @@ export function RemindOwners({ quantity }: { quantity?: number }) {
 export function AddTimeToDiscs({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center">
-      <Hourglass className="w-5 mr-2" aria-hidden="true" />
+      <AddTime className="w-5 mr-2" aria-hidden="true" />
       Add time{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );
@@ -55,7 +55,7 @@ export function AddTimeToDiscs({ quantity }: { quantity?: number }) {
 export function DiscsPickedUp({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center">
-      <Smile className="w-5 mr-2" aria-hidden="true" />
+      <PickedUp className="w-5 mr-2" aria-hidden="true" />
       Picked up{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );
@@ -73,7 +73,7 @@ export function ArchiveDiscs({ quantity }: { quantity?: number }) {
 export function RestoreDiscs({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center">
-      <History className="w-5 mr-2" aria-hidden="true" />
+      <Restore className="w-5 mr-2" aria-hidden="true" />
       Restore{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );
@@ -82,7 +82,7 @@ export function RestoreDiscs({ quantity }: { quantity?: number }) {
 export function ViewDisc({ id }: { id: string }) {
   return (
     <Link href={`/dashboard/discs/${id}`} className="flex items-center">
-      <Eye className="w-5 mr-2" aria-hidden="true" />
+      <View className="w-5 mr-2" aria-hidden="true" />
       View
     </Link>
   );
@@ -91,7 +91,7 @@ export function ViewDisc({ id }: { id: string }) {
 export function UpdateDisc({ id }: { id: string }) {
   return (
     <Link href={`/dashboard/discs/${id}/edit`} className="flex items-center">
-      <Pencil className="w-5 mr-2" aria-hidden="true" />
+      <Edit className="w-5 mr-2" aria-hidden="true" />
       Edit
     </Link>
   );
@@ -100,7 +100,7 @@ export function UpdateDisc({ id }: { id: string }) {
 export function DeleteDiscs({ quantity }: { quantity?: number }) {
   return (
     <div className="flex items-center text-red-500">
-      <Trash2 className="w-5 mr-2" aria-hidden="true" />
+      <Delete className="w-5 mr-2" aria-hidden="true" />
       Delete{quantity || quantity == 0 ? ` (${quantity})` : ""}
     </div>
   );

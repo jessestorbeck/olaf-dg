@@ -1,7 +1,12 @@
 import { Table } from "@tanstack/react-table";
-import { Smile, Archive, Clock, CircleHelp } from "lucide-react";
-import { CircleStackIcon } from "@heroicons/react/24/outline";
 
+import {
+  Discs,
+  AwaitingPickup,
+  PickedUp,
+  Abandoned,
+  Archive,
+} from "@/app/ui/icons";
 import {
   Select,
   SelectContent,
@@ -29,28 +34,25 @@ export function DiscFilter<TData>({ table }: DiscFilterProps<TData>) {
       <SelectContent>
         <SelectItem value="all">
           <span className="flex items-center">
-            <CircleStackIcon
-              className="h-5 mr-2 rotate-90"
-              aria-hidden="true"
-            />
+            <Discs className="h-5 mr-2" aria-hidden="true" />
             All discs
           </span>
         </SelectItem>
         <SelectItem value="awaiting pickup">
           <span className="flex items-center">
-            <Clock className="w-5 mr-2" aria-hidden="true" />
+            <AwaitingPickup className="w-5 mr-2" aria-hidden="true" />
             Awaiting pickup
           </span>
         </SelectItem>
         <SelectItem value="picked up">
           <span className="flex items-center">
-            <Smile className="w-5 mr-2" aria-hidden="true" />
+            <PickedUp className="w-5 mr-2" aria-hidden="true" />
             Picked up
           </span>
         </SelectItem>
         <SelectItem value="abandoned">
           <span className="flex items-center">
-            <CircleHelp className="w-5 mr-2" aria-hidden="true" />
+            <Abandoned className="w-5 mr-2" aria-hidden="true" />
             Abandoned
           </span>
         </SelectItem>

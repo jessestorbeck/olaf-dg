@@ -1,28 +1,23 @@
 "use client";
 
-import {
-  HomeIcon,
-  CircleStackIcon,
-  UserGroupIcon,
-  Cog8ToothIcon,
-  BellAlertIcon,
-} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 
+import { Home, Discs, Players, Templates, Settings } from "@/app/ui/icons";
+
 // Map of links to display in the side navigation.
 // Depending on the size of the application, this would be stored in a database.
 const links = [
-  { name: "Home", href: "/dashboard", icon: HomeIcon },
+  { name: "Home", href: "/dashboard", icon: Home },
   {
     name: "Discs",
     href: "/dashboard/discs",
-    icon: CircleStackIcon,
+    icon: Discs,
   },
-  { name: "Templates", href: "/dashboard/templates", icon: BellAlertIcon },
-  { name: "Players", href: "/dashboard/players", icon: UserGroupIcon },
-  { name: "Settings", href: "/dashboard/settings", icon: Cog8ToothIcon },
+  { name: "Templates", href: "/dashboard/templates", icon: Templates },
+  { name: "Players", href: "/dashboard/players", icon: Players },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export default function NavLinks() {
@@ -42,10 +37,7 @@ export default function NavLinks() {
               }
             )}
           >
-            <LinkIcon
-              // Rotate database icon so it looks like discs
-              className={clsx("w-6", { "rotate-90": link.name === "Discs" })}
-            />
+            <LinkIcon className="w-6" />
             <p className="hidden md:block">{link.name}</p>
           </Link>
         );

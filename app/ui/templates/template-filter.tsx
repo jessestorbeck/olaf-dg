@@ -1,6 +1,12 @@
 import { Table } from "@tanstack/react-table";
-import { ScrollText, Bell, BellPlus, Hourglass, Star } from "lucide-react";
 
+import {
+  Templates,
+  Notify,
+  Remind,
+  AddTime,
+  DefaultTemplate,
+} from "@/app/ui/icons";
 import {
   Select,
   SelectContent,
@@ -34,31 +40,31 @@ export function TemplateFilter<TData>({ table }: TemplateFilterProps<TData>) {
       <SelectContent>
         <SelectItem value="all">
           <span className="flex items-center">
-            <ScrollText className="w-5 mr-2" aria-hidden="true" />
+            <Templates className="w-5 mr-2" aria-hidden="true" />
             All templates
           </span>
         </SelectItem>
         <SelectItem value="notification">
           <span className="flex items-center">
-            <Bell className="w-5 mr-2" aria-hidden="true" />
+            <Notify className="w-5 mr-2" aria-hidden="true" />
             Notification
           </span>
         </SelectItem>
         <SelectItem value="reminder">
           <span className="flex items-center">
-            <BellPlus className="w-5 mr-2" aria-hidden="true" />
+            <Remind className="w-5 mr-2" aria-hidden="true" />
             Reminder
           </span>
         </SelectItem>
         <SelectItem value="extension">
           <span className="flex items-center">
-            <Hourglass className="w-5 mr-2" aria-hidden="true" />
+            <AddTime className="w-5 mr-2" aria-hidden="true" />
             Extension
           </span>
         </SelectItem>
         <SelectItem value="defaults">
           <span className="flex items-center">
-            <Star className="w-5 mr-2" aria-hidden="true" />
+            <DefaultTemplate className="w-5 mr-2" aria-hidden="true" />
             Defaults
           </span>
         </SelectItem>

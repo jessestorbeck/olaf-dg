@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
 
 import {
@@ -21,6 +20,7 @@ import {
 } from "@/app/ui/dropdown-menu";
 import { Button } from "@/app/ui/button";
 import { Input } from "@/app/ui/input";
+import { ChevronDown } from "@/app/ui/icons";
 import {
   NotifyOwners,
   RemindOwners,

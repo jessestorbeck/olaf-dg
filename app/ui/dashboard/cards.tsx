@@ -1,15 +1,12 @@
-import { Clock, CircleHelp, Users } from "lucide-react";
-import { BsDatabase } from "react-icons/bs";
+import { Discs, AwaitingPickup, Abandoned, Players } from "@/app/ui/icons";
 import { primaryFont } from "@/app/ui/fonts";
 import { fetchCardData } from "@/app/lib/data";
 
 const icons = {
-  discs: (
-    <BsDatabase className="h-5 w-5 text-gray-700 -rotate-90 scale-x-110" />
-  ),
-  discsAwaitingPickup: <Clock className="h-5 w-5 text-gray-700" />,
-  discsAbandoned: <CircleHelp className="h-5 w-5 text-gray-700" />,
-  players: <Users className="h-5 w-5 text-gray-700" />,
+  discs: <Discs className="h-5 w-5 text-gray-700" />,
+  discsAwaitingPickup: <AwaitingPickup className="h-5 w-5 text-gray-700" />,
+  discsAbandoned: <Abandoned className="h-5 w-5 text-gray-700" />,
+  players: <Players className="h-5 w-5 text-gray-700" />,
 };
 
 export default async function CardWrapper() {

@@ -38,7 +38,8 @@ export async function fetchCardData() {
     const totaldiscsPromise = sql`
       SELECT COUNT(*)
       FROM discs
-      WHERE user_id = ${user_id} AND status <> 'archived'`;
+      WHERE user_id = ${user_id} AND
+        status NOT IN ('picked up', 'archived')`;
 
     const awaitingPickupPromise = sql`
       SELECT *

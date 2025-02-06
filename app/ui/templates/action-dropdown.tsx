@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
 
 import {
@@ -20,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/ui/dropdown-menu";
 import { Button } from "@/app/ui/button";
+import { ChevronDown } from "@/app/ui/icons";
 import {
   MakeTemplateDefault,
   ViewTemplate,
