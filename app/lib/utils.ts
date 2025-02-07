@@ -6,32 +6,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const formatDate = (date: Date, locale: string = "en-US") => {
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  };
-  const formatter = new Intl.DateTimeFormat(locale, options);
-  return formatter.format(date);
-};
-
-export const formatDateTime = (date: Date, locale: string = "en-US") => {
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  };
-  const formatter = new Intl.DateTimeFormat(locale, options);
-  return formatter.format(date);
-};
-
-export const dateHasPassed = (date: Date | undefined) => {
+export const dateHasPassed = (date: Date | null) => {
   // This should work so that it only returns true
   // after the date has passed in the client timezone
-  if (!date) return false;
+  if (date === null) return false;
   const today = new Date();
 
   if (today.getFullYear() > date.getFullYear()) {
@@ -48,10 +26,10 @@ export const dateHasPassed = (date: Date | undefined) => {
   return false;
 };
 
-export const dateIsClose = (date: Date) => {
+export const dateIsClose = (date: Date | null) => {
   // This should return false if the date has passed
   // but true if the date is within 7 days
-  if (!date || dateHasPassed(date)) {
+  if (date === null || dateHasPassed(date)) {
     return false;
   } else {
     const closeInterval = 7; // days
@@ -110,17 +88,10 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
   const splitTemplate = splitTemplateContent(templateContent);
   return splitTemplate.map(({ substring, className }) => {
     if (substring === "$held_until") {
-      if (disc.held_until) {
-        return {
-          substring: formatDate(disc.held_until),
-          className,
-        };
-      } else {
-        return {
-          substring: formatDate(new Date()),
-          className,
-        };
-      }
+      return {
+        substring: disc.held_until?.toDateString() ?? new Date().toDateString(),
+        className,
+      };
     } else if (substring === "$mold" && !disc.mold) {
       return {
         substring: "disc",

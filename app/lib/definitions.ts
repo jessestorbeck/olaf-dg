@@ -42,7 +42,7 @@ export type Disc = {
   reminder_text: string;
   extension_template: string | null;
   extension_text: string;
-  held_until?: Date;
+  held_until: Date | null;
   created_at: Date;
   updated_at: Date;
 };

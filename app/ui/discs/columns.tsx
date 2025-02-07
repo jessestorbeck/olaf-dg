@@ -15,13 +15,7 @@ import {
 import clsx from "clsx";
 
 import { Disc } from "@/app/lib/definitions";
-import {
-  formatDate,
-  formatDateTime,
-  formatPhone,
-  dateHasPassed,
-  dateIsClose,
-} from "@/app/lib/utils";
+import { formatPhone, dateHasPassed } from "@/app/lib/utils";
 import {
   Tooltip,
   TooltipContent,
@@ -30,6 +24,7 @@ import {
 } from "@/app/ui/tooltip";
 import { Checkbox } from "@/app/ui/checkbox";
 import { ActionDropdown } from "./action-dropdown";
+import { LocalDateTime } from "@/app/ui/local-date-time";
 
 const columnHeader = (column: Column<Disc>, columnName: string) => {
   return (
@@ -134,39 +129,27 @@ export const columns: ColumnDef<Disc>[] = [
     },
   },
   {
-    accessorKey: "created_at",
-    header: ({ column }) => columnHeader(column, "Created at"),
-    cell: ({ row }) => {
-      const formatted = formatDateTime(row.getValue("created_at"));
-      return <div>{formatted}</div>;
-    },
-  },
-  {
     accessorKey: "held_until",
     header: ({ column }) => columnHeader(column, "Held until"),
     cell: ({ row }) => {
-      const formatted =
-        row.getValue("held_until") ?
-          formatDate(row.getValue("held_until"))
-        : "";
-      return (
-        <div
-          className={clsx({
-            "font-bold": dateIsClose(row.getValue("held_until")),
-            "font-bold text-red-500": dateHasPassed(row.getValue("held_until")),
-          })}
-        >
-          {formatted}
-        </div>
-      );
+      const value: Date | null = row.getValue("held_until");
+      return <LocalDateTime date={value} dateOnly={true} />;
+    },
+  },
+  {
+    accessorKey: "created_at",
+    header: ({ column }) => columnHeader(column, "Created at"),
+    cell: ({ row }) => {
+      const value: Date | null = row.getValue("created_at");
+      return <LocalDateTime date={value} />;
     },
   },
   {
     accessorKey: "updated_at",
     header: ({ column }) => columnHeader(column, "Updated at"),
     cell: ({ row }) => {
-      const formatted = formatDateTime(row.getValue("updated_at"));
-      return <div>{formatted}</div>;
+      const value: Date | null = row.getValue("updated_at");
+      return <LocalDateTime date={value} />;
     },
   },
   {

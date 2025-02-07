@@ -11,11 +11,7 @@ import {
   TooltipTrigger,
 } from "@/app/ui/tooltip";
 import { Disc, Template } from "@/app/lib/definitions";
-import {
-  formatDateTime,
-  splitTemplateContent,
-  getTemplatePreview,
-} from "@/app/lib/utils";
+import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
 import { Checkbox } from "@/app/ui/checkbox";
 import {
   ArrowUp,
@@ -23,6 +19,7 @@ import {
   ArrowUpDown,
   DefaultTemplate,
 } from "@/app/ui/icons";
+import { LocalDateTime } from "@/app/ui/local-date-time";
 import { ActionDropdown } from "./action-dropdown";
 
 const PreviewCell = ({
@@ -167,16 +164,16 @@ export function columns(previewDisc: Disc): ColumnDef<Template>[] {
       accessorKey: "created_at",
       header: ({ column }) => columnHeader(column, "Created at"),
       cell: ({ row }) => {
-        const formatted = formatDateTime(row.getValue("created_at"));
-        return <div>{formatted}</div>;
+        const value: Date | null = row.getValue("created_at");
+        return <LocalDateTime date={value} />;
       },
     },
     {
       accessorKey: "updated_at",
       header: ({ column }) => columnHeader(column, "Updated at"),
       cell: ({ row }) => {
-        const formatted = formatDateTime(row.getValue("updated_at"));
-        return <div>{formatted}</div>;
+        const value: Date | null = row.getValue("updated_at");
+        return <LocalDateTime date={value} />;
       },
     },
     {

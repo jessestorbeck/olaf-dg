@@ -26,8 +26,8 @@ async function seedUsers() {
       laf VARCHAR(255) NOT NULL,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `;
 
@@ -77,8 +77,8 @@ async function seedTemplates() {
       type VARCHAR(255) NOT NULL,
       content TEXT NOT NULL,
       is_default BOOLEAN NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `;
 
@@ -134,15 +134,15 @@ async function seedDiscs() {
       notified BOOLEAN NOT NULL,
       reminded BOOLEAN NOT NULL,
       status VARCHAR(255) NOT NULL,
-      held_until TIMESTAMP,
+      held_until TIMESTAMP WITH TIME ZONE,
       notification_template UUID REFERENCES templates(id) ON DELETE SET NULL,
       notification_text TEXT NOT NULL,
       reminder_template UUID REFERENCES templates(id) ON DELETE SET NULL,
       reminder_text TEXT NOT NULL,
       extension_template UUID REFERENCES templates(id) ON DELETE SET NULL,
       extension_text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `;
 
@@ -174,8 +174,8 @@ async function seedTrends() {
       month VARCHAR(4) NOT NULL UNIQUE,
       found INT NOT NULL,
       returned INT NOT NULL,
-      created_at TIMESTAMP DEFAULT NOW(),
-      updated_at TIMESTAMP DEFAULT NOW()
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     );
   `;
 
@@ -206,9 +206,13 @@ export async function GET() {
     await client.sql`BEGIN`;
     console.log("Seeding database");
     await seedUsers();
+    console.log("Seeded users");
     await seedTemplates();
+    console.log("Seeded templates");
     await seedDiscs();
+    console.log("Seeded discs");
     await seedTrends();
+    console.log("Seeded trends");
     await client.sql`COMMIT`;
 
     return new Response(

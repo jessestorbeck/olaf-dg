@@ -235,7 +235,7 @@ export async function notifyOwners(ids: string[]): Promise<ToastState> {
   try {
     await sql`
       UPDATE discs
-      SET notified = TRUE, held_until = NOW() + INTERVAL '60 days'
+      SET notified = TRUE, held_until = NOW() + (INTERVAL '1 day' * ${60})
       WHERE id = ANY(${Object.assign(ids)}) AND user_id = ${user_id}
     `;
     revalidatePath("/dashboard/discs");
