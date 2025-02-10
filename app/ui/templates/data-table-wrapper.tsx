@@ -25,7 +25,7 @@ export function DataTableWrapper({ data }: DataTableWrapperProps<Template>) {
     notified: false,
     reminded: false,
     status: "awaiting pickup",
-    held_until: undefined,
+    held_until: null,
     created_at: new Date(),
     updated_at: new Date(),
     laf: "Haple Mill",

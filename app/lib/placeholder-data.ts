@@ -71,6 +71,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -91,6 +92,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -111,6 +113,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -131,6 +134,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -151,6 +155,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -171,6 +176,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -191,6 +197,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -211,6 +218,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -231,6 +239,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -251,6 +260,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -271,6 +281,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -291,6 +302,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -311,6 +323,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "JS",
@@ -331,6 +344,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -351,6 +365,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
   {
     name: "AC",
@@ -371,6 +386,7 @@ const discs: DiscSeed[] = [
     reminder_text: "seed",
     extension_template: null,
     extension_text: "seed",
+    held_until: null,
   },
 ];
 
