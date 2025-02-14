@@ -112,7 +112,15 @@ export async function fetchDiscById(id: string) {
       WHERE id = ${id} AND user_id = ${user_id};
     `;
 
-    return data.rows[0];
+    const disc = data.rows[0];
+    if (!disc) {
+      throw new Error("Disc not found");
+    }
+    // If any notification template properties are null, set them to "custom"
+    disc.notification_template = disc.notification_template ?? "custom";
+    disc.reminder_template = disc.reminder_template ?? "custom";
+    disc.extension_template = disc.extension_template ?? "custom";
+    return disc;
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch disc");

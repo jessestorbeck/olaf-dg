@@ -86,29 +86,51 @@ export const splitTemplateContent = (
 
 export const getTemplatePreview = (templateContent: string, disc: Disc) => {
   const splitTemplate = splitTemplateContent(templateContent);
-  return splitTemplate.map(({ substring, className }) => {
-    if (substring === "$held_until") {
-      return {
-        substring: disc.held_until?.toDateString() ?? new Date().toDateString(),
-        className,
-      };
-    } else if (substring === "$mold" && !disc.mold) {
-      return {
-        substring: "disc",
-        className,
-      };
-    } else if (templateVarRegex.test(substring)) {
-      return {
-        substring: disc[substring.slice(1) as keyof Disc] as string,
-        className,
-      };
+  const splitPreview = splitTemplate.map(({ substring, className }) => {
+    if (templateVarRegex.test(substring)) {
+      // For each template variable, replace it with the corresponding disc property
+      if (substring === "$held_until") {
+        return {
+          substring:
+            disc.held_until?.toDateString() ?? new Date().toDateString(),
+          className,
+        };
+      } else if (substring === "$mold" && !disc.mold) {
+        return {
+          substring: "disc",
+          className,
+        };
+      } else {
+        const discProp = substring.slice(1) as keyof Disc;
+        const substringVal = disc[discProp]?.toString();
+        return {
+          substring: substringVal?.trim(),
+          className,
+        };
+      }
     } else {
+      // For each non-template variable, return it as is
       return {
         substring,
         className,
       };
     }
   });
+  // Finally, if a template variable is undefined for the disc,
+  // remove the trailing space from the previous substring
+  splitTemplate.forEach(({ substring }, index) => {
+    if (
+      templateVarRegex.test(substring) &&
+      !disc[substring.slice(1) as keyof Disc] &&
+      // Don't include $mold or $held_until here,
+      // since they are auto-filled if undefined
+      !["$mold", "$held_until"].includes(substring)
+    ) {
+      const newSubstring = splitPreview[index - 1].substring?.slice(0, -1);
+      splitPreview[index - 1].substring = newSubstring;
+    }
+  });
+  return splitPreview;
 };
 
 export const generateYAxis = (trends: Trends[]) => {

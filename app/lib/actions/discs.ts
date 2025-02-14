@@ -6,55 +6,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ToastState } from "@/app/lib/definitions";
+import { CreateDiscSchema, UpdateDiscSchema } from "@/app/lib/validation";
 
 // Placeholder until I rework auth
 const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
-
-const maxStrLen = 50;
-const tooLong = { message: `Must be less than ${maxStrLen} characters` };
-
-const FormSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  name: z.string().trim().max(maxStrLen, tooLong).optional(),
-  phone: z.string().regex(/^\d{10}$/, { message: "Invalid phone number" }),
-  color: z.string().trim().max(maxStrLen, tooLong).optional(),
-  brand: z.string().trim().max(maxStrLen, tooLong).optional(),
-  plastic: z.string().trim().max(maxStrLen, tooLong).optional(),
-  mold: z.string().trim().max(maxStrLen, tooLong).optional(),
-  location: z.string().trim().max(maxStrLen, tooLong).optional(),
-  notes: z
-    .string()
-    .trim()
-    .max(250, { message: "Must be less than 250 characters" })
-    .optional(),
-  held_until: z.date().optional(),
-  notified: z.boolean(),
-  reminded: z.boolean(),
-  status: z.enum(["awaiting pickup", "picked up", "archived"]),
-  addAnother: z
-    .enum(["true", "false"])
-    .optional()
-    .transform((v) => v === "true"),
-});
-
-const CreateDisc = FormSchema.omit({
-  id: true,
-  user_id: true,
-  held_until: true,
-  notified: true,
-  reminded: true,
-  status: true,
-});
-const UpdateDisc = FormSchema.omit({
-  id: true,
-  user_id: true,
-  held_until: true,
-  notified: true,
-  reminded: true,
-  status: true,
-  addAnother: true,
-});
 
 export type addEditState = {
   formData?: {
@@ -66,6 +21,12 @@ export type addEditState = {
     mold?: string;
     location?: string;
     notes?: string;
+    notification_template?: string;
+    notification_text?: string;
+    reminder_template?: string;
+    reminder_text?: string;
+    extension_template?: string;
+    extension_text?: string;
     addAnother?: string;
   };
   errors?: {
@@ -78,8 +39,12 @@ export type addEditState = {
     mold?: string[];
     location?: string[];
     notes?: string[];
-    held_until?: string[];
-    status?: string[];
+    notification_template?: string[];
+    notification_text?: string[];
+    reminder_template?: string[];
+    reminder_text?: string[];
+    extension_template?: string[];
+    extension_text?: string[];
     addAnother?: string[];
   };
   toast?: ToastState["toast"];
@@ -89,7 +54,7 @@ export async function createDisc(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = CreateDisc.safeParse({
+  const validatedFields = CreateDiscSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
     color: formData.get("color"),
@@ -98,6 +63,12 @@ export async function createDisc(
     mold: formData.get("mold"),
     location: formData.get("location"),
     notes: formData.get("notes"),
+    notification_template: formData.get("notification_template"),
+    notification_text: formData.get("notification_text"),
+    reminder_template: formData.get("reminder_template"),
+    reminder_text: formData.get("reminder_text"),
+    extension_template: formData.get("extension_template"),
+    extension_text: formData.get("extension_text"),
     addAnother: formData.get("addAnother"),
   });
 
@@ -124,6 +95,12 @@ export async function createDisc(
     mold,
     location,
     notes,
+    notification_template,
+    notification_text,
+    reminder_template,
+    reminder_text,
+    extension_template,
+    extension_text,
     addAnother,
   } = validatedFields.data;
   const notified = false;
@@ -133,8 +110,8 @@ export async function createDisc(
   // Insert data into the database
   try {
     await sql`
-      INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notified, reminded, status, held_until)
-      VALUES (${user_id}, ${name}, ${phone}, ${color}, ${brand}, ${plastic}, ${mold}, ${location}, ${notes}, ${notified}, ${reminded}, ${status}, ${held_until})
+      INSERT INTO discs (user_id, name, phone, color, brand, plastic, mold, location, notes, notification_template, notification_text, reminder_template, reminder_text, extension_template, extension_text, notified, reminded, status, held_until)
+      VALUES (${user_id}, ${name}, ${phone}, ${color}, ${brand}, ${plastic}, ${mold}, ${location}, ${notes}, ${notification_template}, ${notification_text}, ${reminder_template}, ${reminder_text}, ${extension_template}, ${extension_text}, ${notified}, ${reminded}, ${status}, ${held_until})
     `;
   } catch (error) {
     console.error("Database error: failed to create disc", error);
@@ -153,7 +130,7 @@ export async function createDisc(
   const toastTitle = "Disc added!";
   const successMessage = `Added a new ${discString} to your inventory`;
 
-  if (addAnother) {
+  if (addAnother === "true") {
     // If user wants to add another, don't redirect and clear the form
     return {
       toast: {
@@ -176,7 +153,7 @@ export async function updateDisc(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = UpdateDisc.safeParse({
+  const validatedFields = UpdateDiscSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
     color: formData.get("color"),
@@ -185,7 +162,17 @@ export async function updateDisc(
     mold: formData.get("mold"),
     location: formData.get("location"),
     notes: formData.get("notes"),
+    notification_template: formData.get("notification_template"),
+    notification_text: formData.get("notification_text"),
+    reminder_template: formData.get("reminder_template"),
+    reminder_text: formData.get("reminder_text"),
+    extension_template: formData.get("extension_template"),
+    extension_text: formData.get("extension_text"),
+    // Don't actually need this for editing, but it's required in the schema
+    addAnother: formData.get("addAnother"),
   });
+
+  console.log(prevState);
 
   if (!validatedFields.success) {
     return {
@@ -199,13 +186,27 @@ export async function updateDisc(
     };
   }
 
-  const { name, phone, color, brand, plastic, mold, location, notes } =
-    validatedFields.data;
+  const {
+    name,
+    phone,
+    color,
+    brand,
+    plastic,
+    mold,
+    location,
+    notes,
+    notification_template,
+    notification_text,
+    reminder_template,
+    reminder_text,
+    extension_template,
+    extension_text,
+  } = validatedFields.data;
 
   try {
     await sql`
       UPDATE discs
-      SET name = ${name}, phone = ${phone}, color = ${color}, brand = ${brand}, plastic = ${plastic}, mold = ${mold}, location = ${location}, notes = ${notes}
+      SET name = ${name}, phone = ${phone}, color = ${color}, brand = ${brand}, plastic = ${plastic}, mold = ${mold}, location = ${location}, notes = ${notes}, notification_template = ${notification_template}, notification_text = ${notification_text}, reminder_template = ${reminder_template}, reminder_text = ${reminder_text}, extension_template = ${extension_template}, extension_text = ${extension_text}
       WHERE id = ${id} AND user_id = ${user_id}
     `;
   } catch (error) {

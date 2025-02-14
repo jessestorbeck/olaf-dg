@@ -36,11 +36,11 @@ export type Disc = {
   reminded: boolean;
   status: "awaiting pickup" | "picked up" | "archived";
   laf: string;
-  notification_template: string | null;
+  notification_template?: string;
   notification_text: string;
-  reminder_template: string | null;
+  reminder_template?: string;
   reminder_text: string;
-  extension_template: string | null;
+  extension_template?: string;
   extension_text: string;
   held_until: Date | null;
   created_at: Date;

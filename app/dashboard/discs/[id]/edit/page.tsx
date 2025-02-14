@@ -4,6 +4,8 @@ import { fetchDiscById } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
+import { fetchFilteredTemplates } from "@/app/lib/data";
+
 export const metadata: Metadata = {
   title: "Edit Disc",
 };
@@ -12,6 +14,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
   const [disc] = await Promise.all([fetchDiscById(id)]);
+  const templates = await fetchFilteredTemplates("");
 
   if (!disc) {
     notFound();
@@ -29,7 +32,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           },
         ]}
       />
-      <AddEditForm mode="edit" disc={disc} />
+      <AddEditForm mode="edit" templates={templates} disc={disc} />
     </main>
   );
 }
