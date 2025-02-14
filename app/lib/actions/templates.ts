@@ -148,6 +148,8 @@ export async function createTemplate(
 
   const toastTitle = "Template added!";
   const successMessage = `Added a new template "${name}" to your account`;
+  const encodedTitle = encodeURIComponent(btoa(toastTitle));
+  const encodedMessage = encodeURIComponent(btoa(successMessage));
 
   if (addAnother) {
     // If user wants to add another, don't redirect and clear the form
@@ -163,7 +165,7 @@ export async function createTemplate(
   revalidatePath("/dashboard/templates");
   // Pass the message for the toast as a query parameter
   redirect(
-    `/dashboard/templates?message=${encodeURIComponent(successMessage)}&title=${encodeURIComponent(toastTitle)}`
+    `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
 }
 
@@ -208,13 +210,16 @@ export async function updateTemplate(
       formData: Object.fromEntries(formData),
     };
   }
-  const successMessage = `Updated your template "${name}"`;
+
   const toastTitle = "Template updated!";
+  const successMessage = `Updated your template "${name}"`;
+  const encodedTitle = encodeURIComponent(btoa(toastTitle));
+  const encodedMessage = encodeURIComponent(btoa(successMessage));
 
   revalidatePath("/dashboard/templates");
   // Pass the message for the toast as a query parameter
   redirect(
-    `/dashboard/templates?message=${encodeURIComponent(successMessage)}&title=${encodeURIComponent(toastTitle)}`
+    `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
 }
 

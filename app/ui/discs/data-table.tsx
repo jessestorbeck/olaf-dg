@@ -73,8 +73,8 @@ export function DataTable<TData extends Disc, TValue>({
   React.useEffect(() => {
     if (toastMessage) {
       toast({
-        title: decodeURIComponent(toastTitle as string),
-        description: decodeURIComponent(toastMessage as string),
+        title: decodeURIComponent(atob(toastTitle as string)),
+        description: decodeURIComponent(atob(toastMessage as string)),
       });
       // Remove the message from the path after displaying the toast
       router.replace(pathname);

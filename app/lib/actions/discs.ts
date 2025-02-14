@@ -129,6 +129,8 @@ export async function createDisc(
     .join(" ");
   const toastTitle = "Disc added!";
   const successMessage = `Added a new ${discString} to your inventory`;
+  const encodedTitle = encodeURIComponent(btoa(toastTitle));
+  const encodedMessage = encodeURIComponent(btoa(successMessage));
 
   if (addAnother === "true") {
     // If user wants to add another, don't redirect and clear the form
@@ -143,9 +145,7 @@ export async function createDisc(
   // Revalidate the cache for the discs page and redirect the user
   revalidatePath("/dashboard/discs");
   // Pass the message for the toast as a query parameter
-  redirect(
-    `/dashboard/discs?message=${encodeURIComponent(successMessage)}&title=${encodeURIComponent(toastTitle)}`
-  );
+  redirect(`/dashboard/discs?title=${encodedTitle}&message=${encodedMessage}`);
 }
 
 export async function updateDisc(
@@ -222,14 +222,15 @@ export async function updateDisc(
   const discString = [color, brand, plastic, mold || "disc"]
     .filter(Boolean)
     .join(" ");
-  const successMessage = `Updated an existing ${discString} in your inventory`;
+
   const toastTitle = "Disc updated!";
+  const successMessage = `Updated an existing ${discString} in your inventory`;
+  const encodedTitle = encodeURIComponent(btoa(toastTitle));
+  const encodedMessage = encodeURIComponent(btoa(successMessage));
 
   revalidatePath("/dashboard/discs");
   // Pass the message for the toast as a query parameter
-  redirect(
-    `/dashboard/discs?message=${encodeURIComponent(successMessage)}&title=${encodeURIComponent(toastTitle)}`
-  );
+  redirect(`/dashboard/discs?title=${encodedTitle}&message=${encodedMessage}`);
 }
 
 export async function notifyOwners(ids: string[]): Promise<ToastState> {
