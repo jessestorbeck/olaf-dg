@@ -18,7 +18,6 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -28,7 +27,7 @@ import { Textarea } from "@/app/ui/textarea";
 import { Button } from "@/app/ui/button";
 import { useToast } from "@/app/hooks/use-toast";
 import { createDisc, updateDisc, addEditState } from "@/app/lib/actions/discs";
-import { CreateDiscSchema, UpdateDiscSchema } from "@/app/lib/validation";
+import { AddEditDiscSchema } from "@/app/lib/validation";
 import { Disc, Template } from "@/app/lib/definitions";
 import { getTemplatePreview } from "@/app/lib/utils";
 
@@ -95,9 +94,8 @@ export default function AddEditForm({
   );
 
   // For client-side validation
-  const FormSchema = mode === "add" ? CreateDiscSchema : UpdateDiscSchema;
-  const form = useForm<z.infer<typeof FormSchema>>({
-    resolver: zodResolver(FormSchema),
+  const form = useForm<z.infer<typeof AddEditDiscSchema>>({
+    resolver: zodResolver(AddEditDiscSchema),
     defaultValues: {
       name: "",
       phone: "",
@@ -108,8 +106,6 @@ export default function AddEditForm({
       location: "",
       notes: "",
       // Set default values for notification templates
-      // If disc is being edited and doesn't have a template,
-      // set the default to "custom"
       notification_template: notificationTemplates[0].id,
       reminder_template: reminderTemplates[0].id,
       extension_template: extensionTemplates[0].id,
@@ -129,9 +125,8 @@ export default function AddEditForm({
         templates,
         disc ?? ({ id: "", user_id: "", phone: "" } as Disc)
       ),
-      // Override default values with disc values if editing
-      // or after an error during adding
-      ...state.formData,
+      // Override with disc values if editing
+      ...disc,
       // Have to set a value here to avoid controlled input error
       addAnother: "false",
     },
@@ -165,17 +160,13 @@ export default function AddEditForm({
     brand: form.watch("brand"),
     plastic: form.watch("plastic"),
     mold: form.watch("mold"),
-    location: form.watch("location"),
-    notification_template: form.watch("notification_template"),
-    reminder_template: form.watch("reminder_template"),
-    extension_template: form.watch("extension_template"),
   };
 
   // onChange handler for fields needed for previews
   const handleChange = () => {
     interface notificationField {
-      template: keyof z.infer<typeof FormSchema>;
-      text: keyof z.infer<typeof FormSchema>;
+      template: keyof z.infer<typeof AddEditDiscSchema>;
+      text: keyof z.infer<typeof AddEditDiscSchema>;
       skip?: boolean;
     }
     const notificationFields: notificationField[] = [
@@ -231,7 +222,7 @@ export default function AddEditForm({
     form.clearErrors();
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
-        form.setError(key as keyof z.infer<typeof FormSchema>, {
+        form.setError(key as keyof z.infer<typeof AddEditDiscSchema>, {
           message: value[0],
         });
       }
@@ -403,14 +394,12 @@ export default function AddEditForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={"custom"}>Custom</SelectItem>
-                          {notificationTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        <SelectItem value={"custom"}>Custom</SelectItem>
+                        {notificationTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -491,14 +480,12 @@ export default function AddEditForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={"custom"}>Custom</SelectItem>
-                          {reminderTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        <SelectItem value={"custom"}>Custom</SelectItem>
+                        {reminderTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -574,14 +561,12 @@ export default function AddEditForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectGroup>
-                          <SelectItem value={"custom"}>Custom</SelectItem>
-                          {extensionTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
+                        <SelectItem value={"custom"}>Custom</SelectItem>
+                        {extensionTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -675,7 +660,7 @@ export default function AddEditForm({
             </FormItem>
           )}
         />
-        <div className="mt-4 flex justify-end gap-2">
+        <div className="mt-4 flex flex-col md:flex-row justify-end gap-2">
           <Button variant="outline">
             <Link href="/dashboard/discs">Cancel</Link>
           </Button>

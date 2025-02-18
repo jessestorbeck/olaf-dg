@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { ToastState } from "@/app/lib/definitions";
-import { CreateDiscSchema, UpdateDiscSchema } from "@/app/lib/validation";
+import { AddEditDiscSchema } from "@/app/lib/validation";
 
 // Placeholder until I rework auth
 const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
@@ -54,7 +54,7 @@ export async function createDisc(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = CreateDiscSchema.safeParse({
+  const validatedFields = AddEditDiscSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
     color: formData.get("color"),
@@ -153,7 +153,7 @@ export async function updateDisc(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = UpdateDiscSchema.safeParse({
+  const validatedFields = AddEditDiscSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
     color: formData.get("color"),
@@ -171,8 +171,6 @@ export async function updateDisc(
     // Don't actually need this for editing, but it's required in the schema
     addAnother: formData.get("addAnother"),
   });
-
-  console.log(prevState);
 
   if (!validatedFields.success) {
     return {

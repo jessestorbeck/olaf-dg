@@ -15,7 +15,7 @@ export function PreviewDiscPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline">Preview disc</Button>
+        <Button variant="outline">Set preview disc</Button>
       </PopoverTrigger>
       <PopoverContent>
         <div className="grid gap-2">

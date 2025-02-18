@@ -1,29 +1,32 @@
 "use server";
 
-import { z } from "zod";
 import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { Template, ToastState } from "@/app/lib/definitions";
+import { AddEditTemplateSchema } from "@/app/lib/validation";
 
 // Placeholder until I rework auth
 const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
 
-const maxNameLen = 50;
-const maxContentLen = 500;
-const tooLong = (maxLen: number) => {
-  return { message: `Must be less than ${maxLen} characters` };
-};
-
 // Make sure the name doesn't exist already in the database
-const nameExists = async (name: string) => {
+const nameExists = async (name: string, ignoreId?: string) => {
   try {
-    const existingTemplate = await sql<Template>`
-      SELECT name
-      FROM templates
-      WHERE name = ${name} AND user_id = ${user_id}
-    `;
+    const query =
+      ignoreId ?
+        sql<Template>`
+          SELECT name
+          FROM templates
+          WHERE name = ${name} AND user_id = ${user_id} AND id <> ${ignoreId}
+        `
+      : sql<Template>`
+          SELECT name
+          FROM templates
+          WHERE name = ${name} AND user_id = ${user_id}
+        `;
+
+    const existingTemplate = await query;
     if (existingTemplate.rows.length > 0) {
       return true;
     } else {
@@ -34,55 +37,6 @@ const nameExists = async (name: string) => {
     throw new Error("Failed to validate template name");
   }
 };
-
-const FormSchema = z.object({
-  id: z.string().uuid(),
-  user: z.string().uuid(),
-  name: z
-    .string()
-    .trim()
-    .min(1, { message: "Your template must have a name" })
-    .max(maxNameLen, tooLong(maxNameLen))
-    .refine(
-      async (name: string) => {
-        const exists = await nameExists(name);
-        return !exists;
-      },
-      { message: "You already have a template with this name" }
-    ),
-  type: z.enum(["notification", "reminder", "extension"], {
-    message: "You must select a template type",
-  }),
-  content: z
-    .string()
-    .trim()
-    .regex(/\$laf/, {
-      message: "Your template must reference the lost-and-found name with $laf",
-    })
-    .regex(/\$held_until/, {
-      message:
-        "Your template must reference the held-until date with $held_until",
-    })
-    .min(1, { message: "Your template must have content" })
-    .max(maxContentLen, tooLong(maxContentLen)),
-  default: z.boolean(),
-  addAnother: z
-    .enum(["true", "false"])
-    .optional()
-    .transform((v) => v === "true"),
-});
-
-const CreateTemplate = FormSchema.omit({
-  id: true,
-  user: true,
-  default: true,
-});
-const EditTemplate = FormSchema.omit({
-  id: true,
-  user: true,
-  default: true,
-  addAnother: true,
-});
 
 export type addEditState = {
   formData?: {
@@ -104,7 +58,17 @@ export async function createTemplate(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = await CreateTemplate.safeParseAsync({
+  // Extend the template schema to include name validation
+  const TemplateServerSchema = AddEditTemplateSchema.extend({
+    name: AddEditTemplateSchema.shape.name
+      // Just for server-side
+      .refine(async (name) => !(await nameExists(name)), {
+        message: "A template with that name already exists",
+      }),
+  });
+
+  // Validate the form data
+  const validatedFields = await TemplateServerSchema.safeParseAsync({
     name: formData.get("name"),
     type: formData.get("type"),
     content: formData.get("content"),
@@ -151,7 +115,7 @@ export async function createTemplate(
   const encodedTitle = encodeURIComponent(btoa(toastTitle));
   const encodedMessage = encodeURIComponent(btoa(successMessage));
 
-  if (addAnother) {
+  if (addAnother === "true") {
     // If user wants to add another, don't redirect and clear the form
     return {
       toast: {
@@ -174,10 +138,23 @@ export async function updateTemplate(
   prevState: addEditState,
   formData: FormData
 ): Promise<addEditState> {
-  const validatedFields = await EditTemplate.safeParseAsync({
+  // Extend the template schema to include name validation
+  // This works just like in createTemplate, but we provide the id to
+  // nameExists to ignore the name of the template being edited
+  const TemplateServerSchema = AddEditTemplateSchema.extend({
+    name: AddEditTemplateSchema.shape.name
+      // Just for server-side
+      .refine(async (name) => !(await nameExists(name, id)), {
+        message: "A template with that name already exists",
+      }),
+  });
+
+  const validatedFields = await TemplateServerSchema.safeParseAsync({
     name: formData.get("name"),
     type: formData.get("type"),
     content: formData.get("content"),
+    // Don't actually need this for editing, but it's required in the schema
+    addAnother: formData.get("addAnother"),
   });
 
   if (!validatedFields.success) {

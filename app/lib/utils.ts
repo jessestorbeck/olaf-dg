@@ -116,7 +116,7 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
       };
     }
   });
-  // Finally, if a template variable is undefined for the disc,
+  // If a template variable is undefined for the disc,
   // remove the trailing space from the previous substring
   splitTemplate.forEach(({ substring }, index) => {
     if (
@@ -130,7 +130,8 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
       splitPreview[index - 1].substring = newSubstring;
     }
   });
-  return splitPreview;
+  // Finally, remove any empty substrings
+  return splitPreview.filter(({ substring }) => substring !== "");
 };
 
 export const generateYAxis = (trends: Trends[]) => {

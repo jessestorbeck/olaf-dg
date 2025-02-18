@@ -1,9 +1,20 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Link from "next/link";
 
-import { Button } from "@/app/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/app/ui/form";
 import {
   Select,
   SelectContent,
@@ -11,6 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/ui/select";
+import { Input } from "@/app/ui/input";
+import { Textarea } from "@/app/ui/textarea";
+import { Button } from "@/app/ui/button";
+import { Label } from "@/app/ui/label";
 import { PreviewDiscPopover } from "./preview-disc-popover";
 import { useToast } from "@/app/hooks/use-toast";
 import {
@@ -18,14 +33,28 @@ import {
   updateTemplate,
   addEditState,
 } from "@/app/lib/actions/templates";
+import { AddEditTemplateSchema } from "@/app/lib/validation";
 import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
 import { Disc, Template } from "@/app/lib/definitions";
 
 type AddEditFormProps =
-  | { mode: "add"; template?: undefined }
-  | { mode: "edit"; template: Template };
+  | { mode: "add"; templateNames: string[]; template?: undefined }
+  | { mode: "edit"; templateNames: string[]; template: Template };
 
-export default function AddEditForm({ mode, template }: AddEditFormProps) {
+export default function AddEditForm({
+  mode,
+  templateNames,
+  template,
+}: AddEditFormProps) {
+  // Extend the template schema to include name validation
+  const TemplateClientSchema = AddEditTemplateSchema.extend({
+    name: AddEditTemplateSchema.shape.name
+      // Just for client-side (same check done via query on the server)
+      .refine((name) => !templateNames.includes(name), {
+        message: "A template with that name already exists",
+      }),
+  });
+
   const initialState: addEditState = { formData: template };
   const addEditAction =
     mode === "add" ? createTemplate : updateTemplate.bind(null, template.id);
@@ -33,6 +62,20 @@ export default function AddEditForm({ mode, template }: AddEditFormProps) {
     addEditAction,
     initialState
   );
+
+  // For client-side validation
+  const form = useForm<z.infer<typeof TemplateClientSchema>>({
+    resolver: zodResolver(TemplateClientSchema),
+    defaultValues: {
+      name: "",
+      type: undefined,
+      content: "",
+      // Override with template values if editing
+      ...template,
+      // Have to set a value here to avoid controlled input error
+      addAnother: "false",
+    },
+  });
 
   // For toasts
   const { toast } = useToast();
@@ -45,210 +88,189 @@ export default function AddEditForm({ mode, template }: AddEditFormProps) {
     }
   }, [state, toast]);
 
-  // For managing template content
-  const [content, setContent] = useState(
-    state.formData?.content ? state.formData.content : ""
-  );
-  const [styledContent, setStyledContent] = useState<
-    { substring: string; className: string }[]
-  >([]);
-
+  // For form field error messages
   useEffect(() => {
-    setStyledContent(splitTemplateContent(content));
-  }, [content]);
+    form.clearErrors();
+    if (state.errors) {
+      for (const [key, value] of Object.entries(state.errors)) {
+        form.setError(key as keyof z.infer<typeof AddEditTemplateSchema>, {
+          // Display errors on separate lines
+          message: value[0],
+        });
+      }
+    }
+  }, [state.errors, form]);
 
   // For managing template preview
   const initialPreviewDisc: Disc = {
-    id: "35074acb-9121-4e31-9277-4db3241e9999",
-    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
     name: "Paul",
-    phone: "1111111111",
     color: "yellow",
     plastic: "Z",
     brand: "Discraft",
     mold: "Luna",
-    location: "Shelf 1",
-    notes: "Paul's favorite disc",
+    laf: "Haple Mill",
+    // The rest of these don't matter
+    // Just placeholders to satisfy Disc type
+    id: "",
+    user_id: "",
+    phone: "",
+    notes: "",
+    location: "",
     notified: false,
     reminded: false,
     status: "awaiting pickup",
     held_until: null,
     created_at: new Date(),
     updated_at: new Date(),
-    laf: "Haple Mill",
-    notification_template: null,
     notification_text: "",
-    reminder_template: null,
     reminder_text: "",
-    extension_template: null,
     extension_text: "",
   };
   const [previewDisc, setPreviewDisc] = useState(initialPreviewDisc);
-  const [preview, setPreview] = useState<
-    { substring: string; className: string }[]
-  >([]);
 
-  useEffect(() => {
-    setPreview(getTemplatePreview(content, previewDisc));
-  }, [content, previewDisc]);
-
-  // For adding template type to form data
-  // This is a workaround that should be changed
-  // after converting all inputs/forms to shadcn components
-  const handleSelectChange = (value: string) => {
-    if (!state.formData) state.formData = {};
-    state.formData.type = value;
-    if (state.errors?.type) delete state.errors.type;
-  };
+  const content = form.watch("content");
+  const splitContent = splitTemplateContent(content);
+  const preview = getTemplatePreview(content, previewDisc);
 
   return (
-    <form action={formAction}>
-      <div className="rounded-md bg-gray-50 p-4 md:p-6">
-        <div className="mb-4">
-          <label htmlFor="name" className="mb-2 block text-sm font-medium">
-            Name
-          </label>
-          <div className="relative mt-2 rounded-md">
-            <div className="relative">
-              <input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Give your template a name"
-                defaultValue={state.formData?.name}
-                className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
-                aria-describedby={"name-error"}
-              />
-            </div>
-            <div id="name-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.name &&
-                state.errors?.name.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-          </div>
-        </div>
-        <div className="mb-4">
-          <label htmlFor="type" className="mb-2 block text-sm font-medium">
-            Type
-          </label>
-          <div className="relative mt-2 rounded-md">
-            <div className="relative">
-              <Select
-                defaultValue={state.formData?.type}
-                onValueChange={handleSelectChange}
-              >
-                <SelectTrigger
-                  id="type"
-                  name="type"
-                  className="w-[180px] text-sm font-medium placeholder:text-gray-500 bg-background"
-                >
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="notification">Notification</SelectItem>
-                  <SelectItem value="reminder">Reminder</SelectItem>
-                  <SelectItem value="extension">Extension</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {/* Hidden input for getting select value into form data
-            Address this when converting all inputs/forms to shadcn components */}
-            <input
-              type="hidden"
-              id="type"
-              name="type"
-              defaultValue={state.formData?.type}
+    <Form {...form}>
+      <form action={formAction}>
+        <div className="bg-gray-50 p-4 mt-4 rounded-lg">
+          <div className="pt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Give your template a name"
+                      className="bg-background"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            <div id="type-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.type &&
-                state.errors?.type.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} {...field}>
+                    <FormControl>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="notification">Notification</SelectItem>
+                      <SelectItem value="reminder">Reminder</SelectItem>
+                      <SelectItem value="extension">Extension</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div>
+              <Label>Preview disc</Label>
+              <div className="mt-2">
+                <PreviewDiscPopover
+                  previewDiscState={[previewDisc, setPreviewDisc]}
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <label htmlFor="content" className="block text-sm font-medium">
-              Content
-            </label>
-            <PreviewDiscPopover
-              previewDiscState={[previewDisc, setPreviewDisc]}
-            ></PreviewDiscPopover>
+          <div className="mt-4">
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Content</FormLabel>
+                  <FormControl>
+                    <Textarea rows={3} className="bg-background" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Use the terms <strong>$name</strong>,{" "}
+                    <strong>$color</strong>, <strong>$brand</strong>,{" "}
+                    <strong>$plastic</strong>, <strong>$mold</strong>,{" "}
+                    <strong>$laf</strong>, and <strong>$held_until</strong> to
+                    insert dynamic content.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-          <div className="relative mt-2 rounded-md">
-            <div className="relative">
-              <textarea
-                id="content"
-                name="content"
-                placeholder="Use the terms $name, $color, $brand, $plastic, $mold, $laf, and $held_until to insert dynamic content"
-                className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-2 text-sm outline-2 placeholder:text-gray-500"
-                aria-describedby="content-error"
-                rows={3}
-                defaultValue={state.formData?.content}
-                onChange={(e) => setContent(e.target.value)}
-              />
-            </div>
-            <div id="content-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.content &&
-                state.errors?.content.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
-            </div>
-            <div className="relative mt-2 text-sm text-gray-500">
-              <span className="text-black">Content: </span>
-              {styledContent.map((part, index) => (
-                <span key={index} className={part.className}>
-                  {part.substring}
+          <div className="mt-4">
+            <Label>Template preview</Label>
+            <div className="text-sm cursor-not-allowed min-h-[75px] rounded-lg border bg-background mt-2 p-3">
+              {splitContent.map((templateSpan, index) => (
+                <span key={index} className={templateSpan.className}>
+                  {templateSpan.substring}
                 </span>
               ))}
             </div>
-            <div className="relative mt-2 text-sm text-gray-500">
-              <span className="text-black">Preview: </span>
-              {preview.map((part, index) => (
-                <span key={index} className={part.className}>
-                  {part.substring}
+          </div>
+          <div className="mt-4">
+            <Label>Text preview</Label>
+            <div className="text-sm cursor-not-allowed min-h-[75px] rounded-lg border bg-background mt-2 p-3">
+              {preview.map((templateSpan, index) => (
+                <span key={index} className={templateSpan.className}>
+                  {templateSpan.substring}
                 </span>
               ))}
             </div>
           </div>
+          {/* Hidden input to handle whether server action redirects or not */}
+          <FormField
+            control={form.control}
+            name="addAnother"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input type="hidden" {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
         </div>
-      </div>
-      {/* Hidden input to handle whether server action redirects or not */}
-      <input type="hidden" id="addAnother" name="addAnother" value="false" />
-      <div className="mt-4 flex justify-end gap-4">
-        <Button variant="outline">
-          <Link href="/dashboard/templates">Cancel</Link>
-        </Button>
-        <Button
-          variant={mode === "add" ? "outline" : "default"}
-          type="submit"
-          disabled={pending}
-        >
-          Save {mode === "add" ? "and close" : "changes"}
-        </Button>
-        {mode === "add" && (
+        <div className="mt-4 flex flex-col md:flex-row justify-end gap-2">
+          <Button variant="outline">
+            <Link href="/dashboard/templates">Cancel</Link>
+          </Button>
           <Button
+            variant={mode === "add" ? "outline" : "default"}
             type="submit"
             onClick={() => {
-              const addAnother = document.querySelector(
-                'input[id="addAnother"]'
-              ) as HTMLInputElement;
-              addAnother.value = "true";
+              // Set the hidden input value to "false"
+              // Only need this in case of an error
+              // after pressing "Save and add another"
+              form.setValue("addAnother", "false");
             }}
             disabled={pending}
           >
-            Save and add another
+            Save {mode === "add" ? "and close" : "changes"}
           </Button>
-        )}
-      </div>
-    </form>
+          {mode === "add" && (
+            <Button
+              type="submit"
+              onClick={() => {
+                // Set the hidden input value to "true"
+                form.setValue("addAnother", "true");
+              }}
+              disabled={pending}
+            >
+              Save and add another
+            </Button>
+          )}
+        </div>
+      </form>
+    </Form>
   );
 }

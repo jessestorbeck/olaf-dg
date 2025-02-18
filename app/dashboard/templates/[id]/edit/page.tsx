@@ -1,6 +1,6 @@
 import AddEditForm from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
-import { fetchTemplateById } from "@/app/lib/data";
+import { fetchFilteredTemplates } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
@@ -11,9 +11,16 @@ export const metadata: Metadata = {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
-  const [template] = await Promise.all([fetchTemplateById(id)]);
 
-  if (!template) {
+  const templates = await fetchFilteredTemplates("");
+  const templateNames = templates
+    // Since we want to be able to edit a template and save it with the same name,
+    // filter out the template being edited from the list of names
+    .filter((template) => template.id !== id)
+    .map((template) => template.name);
+  const templateToEdit = templates.find((template) => template.id === id);
+
+  if (!templateToEdit) {
     notFound();
   }
 
@@ -29,7 +36,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           },
         ]}
       />
-      <AddEditForm mode="edit" template={template} />
+      <AddEditForm
+        mode="edit"
+        template={templateToEdit}
+        templateNames={templateNames}
+      />
     </main>
   );
 }
