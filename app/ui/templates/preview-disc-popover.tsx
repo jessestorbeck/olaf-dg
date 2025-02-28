@@ -3,12 +3,15 @@ import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/ui/popover";
 import { templateVarClasses } from "@/app/lib/utils";
-import { Disc } from "@/app/lib/definitions";
+import { NotificationPreviewDisc } from "@/db/schema";
 
 export function PreviewDiscPopover({
   previewDiscState,
 }: {
-  previewDiscState: [Disc, (disc: Disc) => void];
+  previewDiscState: [
+    NotificationPreviewDisc,
+    (disc: NotificationPreviewDisc) => void,
+  ];
 }) {
   const [previewDisc, setPreviewDisc] = previewDiscState;
 
@@ -25,7 +28,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="name"
-              value={previewDisc.name}
+              value={previewDisc.name || ""}
               onChange={(e) =>
                 setPreviewDisc({ ...previewDisc, name: e.target.value })
               }
@@ -38,7 +41,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="color"
-              value={previewDisc.color}
+              value={previewDisc.color || ""}
               onChange={(e) =>
                 setPreviewDisc({
                   ...previewDisc,
@@ -54,7 +57,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="brand"
-              value={previewDisc.brand}
+              value={previewDisc.brand || ""}
               onChange={(e) =>
                 setPreviewDisc({
                   ...previewDisc,
@@ -70,7 +73,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="plastic"
-              value={previewDisc.plastic}
+              value={previewDisc.plastic || ""}
               onChange={(e) =>
                 setPreviewDisc({
                   ...previewDisc,
@@ -86,7 +89,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="mold"
-              value={previewDisc.mold}
+              value={previewDisc.mold || ""}
               onChange={(e) =>
                 setPreviewDisc({ ...previewDisc, mold: e.target.value })
               }

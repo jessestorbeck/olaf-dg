@@ -1,8 +1,9 @@
-import AddEditForm from "@/app/ui/templates/add-edit-form";
-import Breadcrumbs from "@/app/ui/breadcrumbs";
-import { fetchFilteredTemplates } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
+
+import AddEditForm from "@/app/ui/templates/add-edit-form";
+import Breadcrumbs from "@/app/ui/breadcrumbs";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export const metadata: Metadata = {
   title: "Edit Disc",
@@ -36,11 +37,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           },
         ]}
       />
-      <AddEditForm
-        mode="edit"
-        template={templateToEdit}
-        templateNames={templateNames}
-      />
+      <AddEditForm template={templateToEdit} templateNames={templateNames} />
     </main>
   );
 }

@@ -3,6 +3,7 @@
 import * as React from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { cva, type VariantProps } from "class-variance-authority";
+import { z } from "zod";
 
 import { X } from "@/app/ui/icons";
 import { cn } from "@/app/lib/utils";
@@ -116,9 +117,18 @@ type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>;
 
+type ToastState = {
+  errors?: z.typeToFlattenedError<number, string>;
+  toast?: {
+    title: string | null;
+    message: string | null;
+  };
+};
+
 export {
   type ToastProps,
   type ToastActionElement,
+  type ToastState,
   ToastProvider,
   ToastViewport,
   Toast,

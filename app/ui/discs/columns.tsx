@@ -14,7 +14,6 @@ import {
 } from "@/app/ui/icons";
 import clsx from "clsx";
 
-import { Disc } from "@/app/lib/definitions";
 import { formatPhone, dateHasPassed } from "@/app/lib/utils";
 import {
   Tooltip,
@@ -25,8 +24,9 @@ import {
 import { Checkbox } from "@/app/ui/checkbox";
 import { ActionDropdown } from "./action-dropdown";
 import { LocalDateTime } from "@/app/ui/local-date-time";
+import { SelectDisc } from "@/db/schema";
 
-const columnHeader = (column: Column<Disc>, columnName: string) => {
+const columnHeader = (column: Column<SelectDisc>, columnName: string) => {
   return (
     <span
       className={clsx(
@@ -47,7 +47,7 @@ const columnHeader = (column: Column<Disc>, columnName: string) => {
   );
 };
 
-export const columns: ColumnDef<Disc>[] = [
+export const columns: ColumnDef<SelectDisc>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -109,19 +109,19 @@ export const columns: ColumnDef<Disc>[] = [
       const status: string = row.getValue("status");
       if (
         status === "awaiting pickup" &&
-        dateHasPassed(row.getValue("held_until"))
+        dateHasPassed(row.getValue("heldUntil"))
       ) {
         return "Abandoned";
       } else {
         return status.charAt(0).toUpperCase() + status.slice(1);
       }
     },
-    filterFn: (row: Row<Disc>, columnId: string, filterValue: string) => {
+    filterFn: (row: Row<SelectDisc>, columnId: string, filterValue: string) => {
       const status = row.getValue(columnId);
       const transformedStatus =
         (
           status === "awaiting pickup" &&
-          dateHasPassed(row.getValue("held_until"))
+          dateHasPassed(row.getValue("heldUntil"))
         ) ?
           "abandoned"
         : status;
@@ -129,26 +129,26 @@ export const columns: ColumnDef<Disc>[] = [
     },
   },
   {
-    accessorKey: "held_until",
+    accessorKey: "heldUntil",
     header: ({ column }) => columnHeader(column, "Held until"),
     cell: ({ row }) => {
-      const value: Date | null = row.getValue("held_until");
+      const value: Date | null = row.getValue("heldUntil");
       return <LocalDateTime date={value} dateOnly={true} />;
     },
   },
   {
-    accessorKey: "created_at",
+    accessorKey: "createdAt",
     header: ({ column }) => columnHeader(column, "Created at"),
     cell: ({ row }) => {
-      const value: Date | null = row.getValue("created_at");
+      const value: Date | null = row.getValue("createdAt");
       return <LocalDateTime date={value} />;
     },
   },
   {
-    accessorKey: "updated_at",
+    accessorKey: "updatedAt",
     header: ({ column }) => columnHeader(column, "Updated at"),
     cell: ({ row }) => {
-      const value: Date | null = row.getValue("updated_at");
+      const value: Date | null = row.getValue("updatedAt");
       return <LocalDateTime date={value} />;
     },
   },
@@ -182,22 +182,22 @@ export const columns: ColumnDef<Disc>[] = [
             <Tooltip>
               <TooltipTrigger className="cursor-default">
                 {disc.status === "awaiting pickup" &&
-                  !dateHasPassed(disc.held_until) && (
+                  !dateHasPassed(disc.heldUntil) && (
                     <AwaitingPickup className="w-5" />
                   )}
                 {disc.status === "picked up" && <PickedUp className="w-5" />}
                 {disc.status === "awaiting pickup" &&
-                  dateHasPassed(disc.held_until) && (
+                  dateHasPassed(disc.heldUntil) && (
                     <Abandoned className="w-5" />
                   )}
                 {disc.status === "archived" && <Archive className="w-5" />}
               </TooltipTrigger>
               <TooltipContent>
                 {disc.status === "awaiting pickup" &&
-                  !dateHasPassed(disc.held_until) && <p>Awaiting pickup</p>}
+                  !dateHasPassed(disc.heldUntil) && <p>Awaiting pickup</p>}
                 {disc.status === "picked up" && <p>Picked up</p>}
                 {disc.status === "awaiting pickup" &&
-                  dateHasPassed(disc.held_until) && <p>Abandoned</p>}
+                  dateHasPassed(disc.heldUntil) && <p>Abandoned</p>}
                 {disc.status === "archived" && <p>Archived</p>}
               </TooltipContent>
             </Tooltip>

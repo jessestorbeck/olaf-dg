@@ -5,7 +5,7 @@ import { Button } from "./button";
 import { useActionState } from "react";
 
 import { ArrowRight, AtSign, Key, CircleAlert } from "@/app/ui/icons";
-import { authenticate } from "@/app/lib/actions/auth";
+import { authenticate } from "@/data-access/users";
 
 export default function LoginForm() {
   const [errorMessage, formAction, isPending] = useActionState(

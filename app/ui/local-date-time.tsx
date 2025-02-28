@@ -16,8 +16,8 @@ export function LocalDateTime({
     setIsClient(true);
   }, []);
 
-  // In the case of null held_until dates, return empty string
-  if (date === null) return "";
+  // In the case of undefined held_until dates, return empty string
+  if (!date) return "";
 
   return (
     <Suspense key={isClient ? "local" : "utc"}>

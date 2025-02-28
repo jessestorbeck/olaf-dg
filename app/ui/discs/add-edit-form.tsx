@@ -26,41 +26,48 @@ import { Input } from "@/app/ui/input";
 import { Textarea } from "@/app/ui/textarea";
 import { Button } from "@/app/ui/button";
 import { useToast } from "@/app/hooks/use-toast";
-import { createDisc, updateDisc, addEditState } from "@/app/lib/actions/discs";
-import { AddEditDiscSchema } from "@/app/lib/validation";
-import { Disc, Template } from "@/app/lib/definitions";
+import {
+  addDisc,
+  AddDiscState,
+  editDisc,
+  EditDiscState,
+} from "@/data-access/discs";
+import { CreateDiscSchema, UpdateDiscSchema } from "@/db/validation";
+import {
+  SelectTemplate,
+  SelectDisc,
+  NotificationPreviewDisc,
+} from "@/db/schema";
 import { getTemplatePreview } from "@/app/lib/utils";
 
-type AddEditFormProps =
-  | { mode: "add"; templates: Template[]; disc?: undefined }
-  | { mode: "edit"; templates: Template[]; disc: Disc };
-
 export default function AddEditForm({
-  mode,
+  disc, // Supply disc if editing
   templates,
-  disc,
-}: AddEditFormProps) {
+}: {
+  disc?: SelectDisc;
+  templates: SelectTemplate[];
+}) {
   // Sort templates by type and default
   const notificationTemplates = templates
     .filter((template) => template.type === "notification")
-    // sort by is_default first, then by name
+    // sort by isDefault first, then by name
     .sort(
       (a, b) =>
-        Number(b.is_default) - Number(a.is_default) ||
+        Number(b.isDefault) - Number(a.isDefault) ||
         a.name.localeCompare(b.name)
     );
   const reminderTemplates = templates
     .filter((template) => template.type === "reminder")
     .sort(
       (a, b) =>
-        Number(b.is_default) - Number(a.is_default) ||
+        Number(b.isDefault) - Number(a.isDefault) ||
         a.name.localeCompare(b.name)
     );
   const extensionTemplates = templates
     .filter((template) => template.type === "extension")
     .sort(
       (a, b) =>
-        Number(b.is_default) - Number(a.is_default) ||
+        Number(b.isDefault) - Number(a.isDefault) ||
         a.name.localeCompare(b.name)
     );
 
@@ -68,8 +75,8 @@ export default function AddEditForm({
   // Could be refactored out to lib/utils if needed
   const getNotificationText = (
     templateID: string,
-    templates: Template[],
-    disc: Disc
+    templates: SelectTemplate[],
+    disc: NotificationPreviewDisc
   ) => {
     const notificationTemplate = templates.find(
       (template) => template.id === templateID
@@ -85,17 +92,21 @@ export default function AddEditForm({
   };
 
   // Set up form state and server action
-  const initialState: addEditState = { formData: disc };
-  const addEditAction =
-    mode === "add" ? createDisc : updateDisc.bind(null, disc.id);
+  const initialAddState: AddDiscState = { formData: {} };
+  const initialEditState: EditDiscState = { formData: disc };
   const [state, formAction, pending] = useActionState(
-    addEditAction,
-    initialState
+    // If disc is supplied, it's being edited;
+    // otherwise, a new disc is being added
+    disc ? editDisc.bind(null, disc.id) : addDisc,
+    // Set intial state accordingly
+    disc ? initialEditState : initialAddState
   );
 
   // For client-side validation
-  const form = useForm<z.infer<typeof AddEditDiscSchema>>({
-    resolver: zodResolver(AddEditDiscSchema),
+  const DiscSchema = disc ? UpdateDiscSchema : CreateDiscSchema;
+  const form = useForm<z.infer<typeof DiscSchema>>({
+    resolver: zodResolver(DiscSchema),
+    mode: "onTouched",
     defaultValues: {
       name: "",
       phone: "",
@@ -106,24 +117,48 @@ export default function AddEditForm({
       location: "",
       notes: "",
       // Set default values for notification templates
-      notification_template: notificationTemplates[0].id,
-      reminder_template: reminderTemplates[0].id,
-      extension_template: extensionTemplates[0].id,
+      notificationTemplate: notificationTemplates[0].id,
+      reminderTemplate: reminderTemplates[0].id,
+      extensionTemplate: extensionTemplates[0].id,
       // Set default values for notification text fields
-      notification_text: getNotificationText(
+      notificationText: getNotificationText(
         notificationTemplates[0].id,
         templates,
-        disc ?? ({ id: "", user_id: "", phone: "" } as Disc)
+        disc ?? {
+          name: "",
+          color: "",
+          brand: "",
+          plastic: "",
+          mold: "",
+          laf: "",
+          heldUntil: new Date(),
+        }
       ),
-      reminder_text: getNotificationText(
+      reminderText: getNotificationText(
         reminderTemplates[0].id,
         templates,
-        disc ?? ({ id: "", user_id: "", phone: "" } as Disc)
+        disc ?? {
+          name: "",
+          color: "",
+          brand: "",
+          plastic: "",
+          mold: "",
+          laf: "",
+          heldUntil: new Date(),
+        }
       ),
-      extension_text: getNotificationText(
+      extensionText: getNotificationText(
         extensionTemplates[0].id,
         templates,
-        disc ?? ({ id: "", user_id: "", phone: "" } as Disc)
+        disc ?? {
+          name: "",
+          color: "",
+          brand: "",
+          plastic: "",
+          mold: "",
+          laf: "",
+          heldUntil: new Date(),
+        }
       ),
       // Override with disc values if editing
       ...disc,
@@ -133,60 +168,41 @@ export default function AddEditForm({
   });
 
   // Disc for notification previews
-  const previewDisc: Disc = {
-    // Dummy values to satisfy Disc type
-    // Need these when adding discs
-    // But, regardless, not actually used for previews
-    id: "",
-    user_id: "",
-    phone: "",
-    notified: false,
-    reminded: false,
-    status: "awaiting pickup",
-    created_at: new Date(),
-    updated_at: new Date(),
-    notification_text: "",
-    reminder_text: "",
-    extension_text: "",
-    // Need these for previews,
-    // and won't be set for new discs
-    laf: "Haple Mill",
-    held_until: new Date(),
-    // Values from form state
-    ...state.formData,
-    // Override with form values
+  const previewDisc: NotificationPreviewDisc = {
     name: form.watch("name"),
     color: form.watch("color"),
     brand: form.watch("brand"),
     plastic: form.watch("plastic"),
     mold: form.watch("mold"),
+    laf: disc?.laf || "Haple Mill",
+    heldUntil: disc?.heldUntil || new Date(),
   };
 
   // onChange handler for fields needed for previews
   const handleChange = () => {
     interface notificationField {
-      template: keyof z.infer<typeof AddEditDiscSchema>;
-      text: keyof z.infer<typeof AddEditDiscSchema>;
+      template: keyof z.infer<typeof DiscSchema>;
+      text: keyof z.infer<typeof DiscSchema>;
       skip?: boolean;
     }
     const notificationFields: notificationField[] = [
       {
-        template: "notification_template",
-        text: "notification_text",
+        template: "notificationTemplate",
+        text: "notificationText",
         skip:
           disc?.notified ||
           ["picked_up", "archived"].includes(disc?.status ?? ""),
       },
       {
-        template: "reminder_template",
-        text: "reminder_text",
+        template: "reminderTemplate",
+        text: "reminderText",
         skip:
           disc?.reminded ||
           ["picked_up", "archived"].includes(disc?.status ?? ""),
       },
       {
-        template: "extension_template",
-        text: "extension_text",
+        template: "extensionTemplate",
+        text: "extensionText",
         skip: ["picked_up", "archived"].includes(disc?.status ?? ""),
       },
     ];
@@ -195,7 +211,11 @@ export default function AddEditForm({
       // Skip a field if it's disabled in the form
       if (field.skip) return;
       const templateID = form.getValues(field.template);
-      if (templateID && templateID !== "custom") {
+      if (
+        templateID &&
+        typeof templateID === "string" &&
+        templateID !== "custom"
+      ) {
         const notificationText = getNotificationText(
           templateID,
           templates,
@@ -217,17 +237,18 @@ export default function AddEditForm({
     }
   }, [state, toast]);
 
-  // For form field error messages
+  // For server-side error messages
+  // and form reset on successful submission
   useEffect(() => {
-    form.clearErrors();
+    form.reset(state.formData);
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
-        form.setError(key as keyof z.infer<typeof AddEditDiscSchema>, {
-          message: value[0],
+        form.setError(key as keyof z.infer<typeof DiscSchema>, {
+          message: (value as string[])[0],
         });
       }
     }
-  }, [state.errors, form]);
+  }, [state.errors, state.formData, form]);
 
   return (
     <Form {...form}>
@@ -248,6 +269,7 @@ export default function AddEditForm({
                       className="bg-background"
                       onKeyUp={handleChange}
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -264,6 +286,7 @@ export default function AddEditForm({
                     <Input
                       placeholder="555-555-5555"
                       className="bg-background"
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -289,6 +312,7 @@ export default function AddEditForm({
                       className="bg-background"
                       onKeyUp={handleChange}
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -307,6 +331,7 @@ export default function AddEditForm({
                       className="bg-background"
                       onKeyUp={handleChange}
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -325,6 +350,7 @@ export default function AddEditForm({
                       className="bg-background"
                       onKeyUp={handleChange}
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -343,6 +369,7 @@ export default function AddEditForm({
                       className="bg-background"
                       onKeyUp={handleChange}
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -359,13 +386,12 @@ export default function AddEditForm({
               {/* Select notification template */}
               <FormField
                 control={form.control}
-                name="notification_template"
+                name="notificationTemplate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notification template</FormLabel>
                     <Select
                       onValueChange={(e) => {
-                        field.onChange(e);
                         // Set notification text with the selected template,
                         // unless it's a custom template (in which case, do nothing)
                         if (e !== "custom") {
@@ -374,10 +400,12 @@ export default function AddEditForm({
                             templates,
                             previewDisc
                           );
-                          form.setValue("notification_text", notificationText);
+                          form.setValue("notificationText", notificationText);
                         }
+                        field.onChange(e);
                       }}
                       {...field}
+                      value={field.value ?? notificationTemplates[0].id}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -409,7 +437,7 @@ export default function AddEditForm({
               {/* Notification text */}
               <FormField
                 control={form.control}
-                name="notification_text"
+                name="notificationText"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notification text</FormLabel>
@@ -431,11 +459,12 @@ export default function AddEditForm({
                               disc?.status ?? ""
                             ),
                         })}
-                        // Set to "custom" if user types in the field
-                        onKeyUp={() =>
-                          form.setValue("notification_template", "custom")
-                        }
                         {...field}
+                        // Set to custom if user types in the field
+                        onChange={(e) => {
+                          form.setValue("notificationTemplate", "custom");
+                          field.onChange(e);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -447,23 +476,24 @@ export default function AddEditForm({
               {/* Select reminder template */}
               <FormField
                 control={form.control}
-                name="reminder_template"
+                name="reminderTemplate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Reminder template</FormLabel>
                     <Select
                       onValueChange={(e) => {
-                        field.onChange(e);
                         if (e !== "custom") {
                           const reminderText = getNotificationText(
                             e,
                             templates,
                             previewDisc
                           );
-                          form.setValue("reminder_text", reminderText);
+                          form.setValue("reminderText", reminderText);
                         }
+                        field.onChange(e);
                       }}
                       {...field}
+                      value={field.value || reminderTemplates[0].id}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -495,7 +525,7 @@ export default function AddEditForm({
               {/* Reminder text */}
               <FormField
                 control={form.control}
-                name="reminder_text"
+                name="reminderText"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Reminder text</FormLabel>
@@ -515,11 +545,12 @@ export default function AddEditForm({
                               disc?.status ?? ""
                             ),
                         })}
-                        // Set to custom if user types in the field
-                        onKeyUp={() =>
-                          form.setValue("reminder_template", "custom")
-                        }
                         {...field}
+                        // Set to custom if user types in the field
+                        onChange={(e) => {
+                          form.setValue("reminderTemplate", "custom");
+                          field.onChange(e);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -531,23 +562,24 @@ export default function AddEditForm({
               {/* Select extension template */}
               <FormField
                 control={form.control}
-                name="extension_template"
+                name="extensionTemplate"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Extension template</FormLabel>
                     <Select
                       onValueChange={(e) => {
-                        field.onChange(e);
                         if (e !== "custom") {
                           const extensionText = getNotificationText(
                             e,
                             templates,
                             previewDisc
                           );
-                          form.setValue("extension_text", extensionText);
+                          form.setValue("extensionText", extensionText);
                         }
+                        field.onChange(e);
                       }}
                       {...field}
+                      value={field.value || extensionTemplates[0].id}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -576,7 +608,7 @@ export default function AddEditForm({
               {/* Extension text */}
               <FormField
                 control={form.control}
-                name="extension_text"
+                name="extensionText"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Extension text</FormLabel>
@@ -594,11 +626,12 @@ export default function AddEditForm({
                             "picked_up",
                           ].includes(disc?.status ?? ""),
                         })}
-                        // Set to custom if user types in the field
-                        onKeyUp={() =>
-                          form.setValue("extension_template", "custom")
-                        }
                         {...field}
+                        // Set to custom if user types in the field
+                        onChange={(e) => {
+                          form.setValue("extensionTemplate", "custom");
+                          field.onChange(e);
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -623,6 +656,7 @@ export default function AddEditForm({
                       placeholder="Shelf 3"
                       className="bg-background"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -640,6 +674,7 @@ export default function AddEditForm({
                       placeholder="Found in pond"
                       className="bg-background"
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -665,7 +700,7 @@ export default function AddEditForm({
             <Link href="/dashboard/discs">Cancel</Link>
           </Button>
           <Button
-            variant={mode === "add" ? "outline" : "default"}
+            variant={disc ? "default" : "outline"}
             type="submit"
             onClick={() => {
               // Set the hidden input value to "false"
@@ -675,9 +710,9 @@ export default function AddEditForm({
             }}
             disabled={pending}
           >
-            Save {mode === "add" ? "and close" : "changes"}
+            Save {disc ? "changes" : "and close"}
           </Button>
-          {mode === "add" && (
+          {!disc && (
             <Button
               type="submit"
               onClick={() => {

@@ -29,43 +29,49 @@ import { Label } from "@/app/ui/label";
 import { PreviewDiscPopover } from "./preview-disc-popover";
 import { useToast } from "@/app/hooks/use-toast";
 import {
-  createTemplate,
-  updateTemplate,
-  addEditState,
-} from "@/app/lib/actions/templates";
-import { AddEditTemplateSchema } from "@/app/lib/validation";
+  addTemplate,
+  AddTemplateState,
+  editTemplate,
+  EditTemplateState,
+} from "@/data-access/templates";
 import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
-import { Disc, Template } from "@/app/lib/definitions";
-
-type AddEditFormProps =
-  | { mode: "add"; templateNames: string[]; template?: undefined }
-  | { mode: "edit"; templateNames: string[]; template: Template };
+import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
+import { CreateTemplateSchema, UpdateTemplateSchema } from "@/db/validation";
 
 export default function AddEditForm({
-  mode,
+  template, // Supply template if editing
   templateNames,
-  template,
-}: AddEditFormProps) {
+}: {
+  template?: SelectTemplate;
+  templateNames: string[];
+}) {
+  // Set up the zod schema according to whether we're adding or editing
+  const TemplateSchema = template ? UpdateTemplateSchema : CreateTemplateSchema;
   // Extend the template schema to include name validation
-  const TemplateClientSchema = AddEditTemplateSchema.extend({
-    name: AddEditTemplateSchema.shape.name
+  const TemplateClientSchema = TemplateSchema.extend({
+    name: TemplateSchema.shape.name
       // Just for client-side (same check done via query on the server)
+      // templateNames will not include the template being edited (see edit/page.tsx)
       .refine((name) => !templateNames.includes(name), {
         message: "A template with that name already exists",
       }),
   });
 
-  const initialState: addEditState = { formData: template };
-  const addEditAction =
-    mode === "add" ? createTemplate : updateTemplate.bind(null, template.id);
+  // Set up form state and server action
+  const initialAddState: AddTemplateState = {};
+  const initialEditState: EditTemplateState = { formData: template };
   const [state, formAction, pending] = useActionState(
-    addEditAction,
-    initialState
+    // If template is supplied, it's being edited;
+    // otherwise, a new template is being added
+    template ? editTemplate.bind(null, template.id) : addTemplate,
+    // Set intial state accordingly
+    template ? initialEditState : initialAddState
   );
 
   // For client-side validation
   const form = useForm<z.infer<typeof TemplateClientSchema>>({
     resolver: zodResolver(TemplateClientSchema),
+    mode: "onTouched",
     defaultValues: {
       name: "",
       type: undefined,
@@ -88,43 +94,28 @@ export default function AddEditForm({
     }
   }, [state, toast]);
 
-  // For form field error messages
+  // For server-side error messages
+  // and form reset on successful submission
   useEffect(() => {
-    form.clearErrors();
+    form.reset(state.formData);
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
-        form.setError(key as keyof z.infer<typeof AddEditTemplateSchema>, {
-          // Display errors on separate lines
-          message: value[0],
+        form.setError(key as keyof z.infer<typeof TemplateClientSchema>, {
+          message: (value as string[])[0],
         });
       }
     }
-  }, [state.errors, form]);
+  }, [state.errors, state.formData, form]);
 
   // For managing template preview
-  const initialPreviewDisc: Disc = {
+  const initialPreviewDisc: NotificationPreviewDisc = {
     name: "Paul",
     color: "yellow",
     plastic: "Z",
     brand: "Discraft",
     mold: "Luna",
     laf: "Haple Mill",
-    // The rest of these don't matter
-    // Just placeholders to satisfy Disc type
-    id: "",
-    user_id: "",
-    phone: "",
-    notes: "",
-    location: "",
-    notified: false,
-    reminded: false,
-    status: "awaiting pickup",
-    held_until: null,
-    created_at: new Date(),
-    updated_at: new Date(),
-    notification_text: "",
-    reminder_text: "",
-    extension_text: "",
+    heldUntil: new Date(),
   };
   const [previewDisc, setPreviewDisc] = useState(initialPreviewDisc);
 
@@ -199,7 +190,7 @@ export default function AddEditForm({
                     Use the terms <strong>$name</strong>,{" "}
                     <strong>$color</strong>, <strong>$brand</strong>,{" "}
                     <strong>$plastic</strong>, <strong>$mold</strong>,{" "}
-                    <strong>$laf</strong>, and <strong>$held_until</strong> to
+                    <strong>$laf</strong>, and <strong>$heldUntil</strong> to
                     insert dynamic content.
                   </FormDescription>
                   <FormMessage />
@@ -245,7 +236,7 @@ export default function AddEditForm({
             <Link href="/dashboard/templates">Cancel</Link>
           </Button>
           <Button
-            variant={mode === "add" ? "outline" : "default"}
+            variant={template ? "default" : "outline"}
             type="submit"
             onClick={() => {
               // Set the hidden input value to "false"
@@ -255,9 +246,9 @@ export default function AddEditForm({
             }}
             disabled={pending}
           >
-            Save {mode === "add" ? "and close" : "changes"}
+            Save {template ? "changes" : "and close"}
           </Button>
-          {mode === "add" && (
+          {!template && (
             <Button
               type="submit"
               onClick={() => {

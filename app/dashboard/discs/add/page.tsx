@@ -2,7 +2,7 @@ import AddEditForm from "@/app/ui/discs/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { Metadata } from "next";
 
-import { fetchFilteredTemplates } from "@/app/lib/data";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export const metadata: Metadata = {
   title: "Add disc",
@@ -22,7 +22,7 @@ export default async function Page() {
           },
         ]}
       />
-      <AddEditForm mode="add" templates={templates} />
+      <AddEditForm templates={templates} />
     </main>
   );
 }

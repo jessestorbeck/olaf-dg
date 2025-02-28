@@ -14,6 +14,24 @@ interface columnVisibilityProps<TData> {
   table: Table<TData>;
 }
 
+const columnAliases = {
+  name: "Name",
+  type: "Type",
+  content: "Content",
+  preview: "Preview",
+  isDefault: "Default",
+  createdAt: "Created at",
+  updatedAt: "Updated at",
+  phone: "Phone",
+  color: "Color",
+  brand: "Brand",
+  plastic: "Plastic",
+  mold: "Mold",
+  location: "Location",
+  heldUntil: "Held until",
+  status: "Status",
+};
+
 export function ColumnVisibility<TData>({
   table,
 }: columnVisibilityProps<TData>) {
@@ -27,21 +45,15 @@ export function ColumnVisibility<TData>({
           .getAllColumns()
           .filter((column) => column.getCanHide())
           .map((column) => {
-            const colName = column.id
-              .replace(/is_/g, "") // Remove is_ prefix (for is_default template column)
-              .replace(/_/g, " "); // Replace remaining underscores with spaces
-            const colNameFormatted = colName
-              // Sentence case the column name
-              .charAt(0)
-              .toUpperCase()
-              .concat(colName.slice(1));
+            const colName =
+              columnAliases[column.id as keyof typeof columnAliases];
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {colNameFormatted}
+                {colName}
               </DropdownMenuCheckboxItem>
             );
           })}

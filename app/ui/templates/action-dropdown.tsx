@@ -28,23 +28,21 @@ import {
 } from "./action-buttons";
 import { AlertTable } from "./alert-table";
 import { useToast } from "@/app/hooks/use-toast";
-import { makeDefault, deleteTemplates } from "@/app/lib/actions/templates";
-import { ToastState } from "@/app/lib/definitions";
-import { Template } from "@/app/lib/definitions";
+import { makeDefault, deleteTemplates } from "@/data-access/templates";
+import { ToastState } from "@/app/ui/toast";
+import { SelectTemplate } from "@/db/schema";
 
 export function ActionDropdown({
   templates,
   totalTemplates,
   actionSet,
 }: {
-  templates: Template[];
+  templates: SelectTemplate[];
   totalTemplates?: number;
   actionSet: "row" | "selected";
 }) {
   // Defaut templates can't be deleted
-  const templatesToDelete = templates.filter(
-    (template) => !template.is_default
-  );
+  const templatesToDelete = templates.filter((template) => !template.isDefault);
   const idsToDelete = templatesToDelete.map((template) => template.id);
 
   // For toasts after all actions
@@ -113,7 +111,7 @@ export function ActionDropdown({
             <div>
               <DropdownMenuItem
                 onClick={handleMakeDefault}
-                disabled={templates[0].is_default}
+                disabled={templates[0].isDefault}
               >
                 <MakeTemplateDefault />
               </DropdownMenuItem>

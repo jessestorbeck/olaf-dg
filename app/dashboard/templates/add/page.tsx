@@ -2,7 +2,7 @@ import AddEditForm from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { Metadata } from "next";
 
-import { fetchFilteredTemplates } from "@/app/lib/data";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export const metadata: Metadata = {
   title: "Add Template",
@@ -25,7 +25,7 @@ export default async function Page() {
           },
         ]}
       />
-      <AddEditForm mode="add" templateNames={templateNames} />
+      <AddEditForm templateNames={templateNames} />
     </main>
   );
 }

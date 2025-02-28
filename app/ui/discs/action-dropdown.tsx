@@ -35,24 +35,21 @@ import {
 import { AlertTable } from "./alert-table";
 import { useToast } from "@/app/hooks/use-toast";
 import {
-  notifyOwners,
-  remindOwners,
-  discsPickedUp,
+  sendNotifications,
+  updateDiscStatus,
   addTimeToDiscs,
-  archiveDiscs,
-  restoreDiscs,
   deleteDiscs,
-} from "@/app/lib/actions/discs";
-import { ToastState } from "@/app/lib/definitions";
+} from "@/data-access/discs";
+import { ToastState } from "@/app/ui/toast";
 import { dateHasPassed } from "@/app/lib/utils";
-import { Disc } from "@/app/lib/definitions";
+import { SelectDisc } from "@/db/schema";
 
 export function ActionDropdown({
   discs,
   totalDiscs,
   actionSet,
 }: {
-  discs: Disc[];
+  discs: SelectDisc[];
   totalDiscs?: number;
   actionSet: "row" | "selected";
 }) {
@@ -77,7 +74,7 @@ export function ActionDropdown({
     // Only allow archiving of discs that have passed their held-until date
     // and are not already archived
     toArchive: discs.filter(
-      (disc) => dateHasPassed(disc.held_until) && disc.status !== "archived"
+      (disc) => dateHasPassed(disc.heldUntil) && disc.status !== "archived"
     ),
     // Only allow picked up or archived discs to be restored to "awaiting pickup"
     toRestore: discs.filter((disc) =>
@@ -112,9 +109,10 @@ export function ActionDropdown({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Action handlers
-  const handleNotify = async () => {
-    const idsToNotify = filteredDiscs.toNotify.map((disc) => disc.id);
-    const notifyOwnersWithIds = notifyOwners.bind(null, idsToNotify);
+  const handleNotify = async (mode: "initial" | "reminder") => {
+    const category = mode === "initial" ? "toNotify" : "toRemind";
+    const idsToNotify = filteredDiscs[category].map((disc) => disc.id);
+    const notifyOwnersWithIds = sendNotifications.bind(null, idsToNotify, mode);
     try {
       const result = await notifyOwnersWithIds();
       setState(result);
@@ -122,16 +120,7 @@ export function ActionDropdown({
       console.error("Failed to notify owners:", error);
     }
   };
-  const handleRemind = async () => {
-    const idsToRemind = filteredDiscs.toRemind.map((disc) => disc.id);
-    const remindOwnersWithIds = remindOwners.bind(null, idsToRemind);
-    try {
-      const result = await remindOwnersWithIds();
-      setState(result);
-    } catch (error) {
-      console.error("Failed to remind owners:", error);
-    }
-  };
+
   const handleAddTime = async () => {
     setPending(true);
     const idsToAddTime = filteredDiscs.toAddTime.map((disc) => disc.id);
@@ -150,36 +139,28 @@ export function ActionDropdown({
       setPending(false);
     }
   };
-  const handlePickUp = async () => {
-    const idsPickedUp = filteredDiscs.toPickUp.map((disc) => disc.id);
-    const discsPickedUpWithIds = discsPickedUp.bind(null, idsPickedUp);
+
+  const handleStatusUpdate = async (
+    status: "awaiting pickup" | "picked up" | "archived"
+  ) => {
+    const category =
+      status === "awaiting pickup" ? "toRestore"
+      : status === "picked up" ? "toPickUp"
+      : "toArchive";
+    const idsToUpdate = filteredDiscs[category].map((disc) => disc.id);
+    const updateDiscStatusWithIds = updateDiscStatus.bind(
+      null,
+      idsToUpdate,
+      status
+    );
     try {
-      const result = await discsPickedUpWithIds();
+      const result = await updateDiscStatusWithIds();
       setState(result);
     } catch (error) {
-      console.error("Failed to pick up discs:", error);
+      console.error("Failed to update disc status:", error);
     }
   };
-  const handleArchive = async () => {
-    const idsToArchive = filteredDiscs.toArchive.map((disc) => disc.id);
-    const archiveDiscsWithIds = archiveDiscs.bind(null, idsToArchive);
-    try {
-      const result = await archiveDiscsWithIds();
-      setState(result);
-    } catch (error) {
-      console.error("Failed to archive discs:", error);
-    }
-  };
-  const handleRestore = async () => {
-    const idsToRestore = filteredDiscs.toRestore.map((disc) => disc.id);
-    const restoreDiscsWithIds = restoreDiscs.bind(null, idsToRestore);
-    try {
-      const result = await restoreDiscsWithIds();
-      setState(result);
-    } catch (error) {
-      console.error("Failed to restore discs:", error);
-    }
-  };
+
   const handleDelete = async () => {
     setPending(true);
     const idsToDelete = discs.map((disc) => disc.id);
@@ -194,6 +175,7 @@ export function ActionDropdown({
       setPending(false);
     }
   };
+
   const handleDialogAction = () => {
     if (addTimeDialogOpen) {
       handleAddTime();
@@ -201,6 +183,7 @@ export function ActionDropdown({
       handleDelete();
     }
   };
+
   const handleDialogCancel = () => {
     setErrorMessage("");
     setAddTimeDialogOpen(false);
@@ -230,7 +213,7 @@ export function ActionDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={handleNotify}
+            onClick={() => handleNotify("initial")}
             disabled={filteredDiscs.toNotify.length === 0}
           >
             <NotifyOwners
@@ -242,7 +225,7 @@ export function ActionDropdown({
             />
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={handleRemind}
+            onClick={() => handleNotify("reminder")}
             disabled={filteredDiscs.toRemind.length === 0}
           >
             <RemindOwners
@@ -267,7 +250,7 @@ export function ActionDropdown({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handlePickUp}
+            onClick={() => handleStatusUpdate("picked up")}
             disabled={filteredDiscs.toPickUp.length === 0}
           >
             <DiscsPickedUp
@@ -279,7 +262,7 @@ export function ActionDropdown({
             />
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={handleArchive}
+            onClick={() => handleStatusUpdate("archived")}
             disabled={filteredDiscs.toArchive.length === 0}
           >
             <ArchiveDiscs
@@ -291,7 +274,7 @@ export function ActionDropdown({
             />
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={handleRestore}
+            onClick={() => handleStatusUpdate("awaiting pickup")}
             disabled={filteredDiscs.toRestore.length === 0}
           >
             <RestoreDiscs

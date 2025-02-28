@@ -10,7 +10,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/app/ui/tooltip";
-import { Disc, Template } from "@/app/lib/definitions";
 import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
 import { Checkbox } from "@/app/ui/checkbox";
 import {
@@ -21,13 +20,14 @@ import {
 } from "@/app/ui/icons";
 import { LocalDateTime } from "@/app/ui/local-date-time";
 import { ActionDropdown } from "./action-dropdown";
+import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
 
 const PreviewCell = ({
   content,
   previewDisc,
 }: {
   content: string;
-  previewDisc: Disc;
+  previewDisc: NotificationPreviewDisc;
 }) => {
   const [preview, setPreview] = useState(
     getTemplatePreview(content, previewDisc)
@@ -50,7 +50,7 @@ const PreviewCell = ({
   );
 };
 
-const columnHeader = (column: Column<Template>, columnName: string) => {
+const columnHeader = (column: Column<SelectTemplate>, columnName: string) => {
   return (
     <span
       className={clsx(
@@ -71,7 +71,9 @@ const columnHeader = (column: Column<Template>, columnName: string) => {
   );
 };
 
-export function columns(previewDisc: Disc): ColumnDef<Template>[] {
+export function columns(
+  previewDisc: NotificationPreviewDisc
+): ColumnDef<SelectTemplate>[] {
   return [
     {
       id: "select",
@@ -136,10 +138,10 @@ export function columns(previewDisc: Disc): ColumnDef<Template>[] {
       },
     },
     {
-      accessorKey: "is_default",
+      accessorKey: "isDefault",
       header: ({ column }) => columnHeader(column, "Default"),
       cell: ({ row }) => {
-        const value: boolean = row.getValue("is_default");
+        const value: boolean = row.getValue("isDefault");
         return (
           <div className="flex justify-center">
             <TooltipProvider>
@@ -161,18 +163,18 @@ export function columns(previewDisc: Disc): ColumnDef<Template>[] {
       },
     },
     {
-      accessorKey: "created_at",
+      accessorKey: "createdAt",
       header: ({ column }) => columnHeader(column, "Created at"),
       cell: ({ row }) => {
-        const value: Date | null = row.getValue("created_at");
+        const value: Date = row.getValue("createdAt");
         return <LocalDateTime date={value} />;
       },
     },
     {
-      accessorKey: "updated_at",
+      accessorKey: "updatedAt",
       header: ({ column }) => columnHeader(column, "Updated at"),
       cell: ({ row }) => {
-        const value: Date | null = row.getValue("updated_at");
+        const value: Date = row.getValue("updatedAt");
         return <LocalDateTime date={value} />;
       },
     },

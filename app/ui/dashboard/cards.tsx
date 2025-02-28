@@ -1,6 +1,6 @@
 import { Discs, AwaitingPickup, Abandoned, Players } from "@/app/ui/icons";
 import { primaryFont } from "@/app/ui/fonts";
-import { fetchCardData } from "@/app/lib/data";
+import { fetchCardData } from "@/data-access/discs";
 
 const icons = {
   discs: <Discs className="h-5 w-5 text-gray-700" />,
@@ -10,26 +10,18 @@ const icons = {
 };
 
 export default async function CardWrapper() {
-  const {
-    totalDiscs,
-    totalDiscsAwaitingPickup,
-    totalDiscsAbandoned,
-    totalPlayers,
-  } = await fetchCardData();
+  const { totalInventory, awaitingPickup, abandoned, totalPlayers } =
+    await fetchCardData();
 
   return (
     <>
-      <Card title="Total discs" value={totalDiscs} icon="discs" />
+      <Card title="Total discs" value={totalInventory} icon="discs" />
       <Card
         title="Discs awaiting pickup"
-        value={totalDiscsAwaitingPickup}
+        value={awaitingPickup}
         icon="discsAwaitingPickup"
       />
-      <Card
-        title="Abandoned discs"
-        value={totalDiscsAbandoned}
-        icon="discsAbandoned"
-      />
+      <Card title="Abandoned discs" value={abandoned} icon="discsAbandoned" />
       <Card title="Total players" value={totalPlayers} icon="players" />
     </>
   );

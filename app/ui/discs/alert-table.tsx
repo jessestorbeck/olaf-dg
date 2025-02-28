@@ -6,10 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/ui/table";
-import { Disc } from "@/app/lib/definitions";
 import { formatPhone } from "@/app/lib/utils";
+import { SelectDisc } from "@/db/schema";
 
-export function AlertTable({ discs }: { discs: Disc[] }) {
+export function AlertTable({ discs }: { discs: SelectDisc[] }) {
   return (
     <div className="max-h-48 overflow-y-scroll my-4">
       <Table className="w-full">

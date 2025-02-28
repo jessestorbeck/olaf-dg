@@ -1,10 +1,10 @@
-import AddEditForm from "@/app/ui/discs/add-edit-form";
-import Breadcrumbs from "@/app/ui/breadcrumbs";
-import { fetchDiscById } from "@/app/lib/data";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
-import { fetchFilteredTemplates } from "@/app/lib/data";
+import AddEditForm from "@/app/ui/discs/add-edit-form";
+import Breadcrumbs from "@/app/ui/breadcrumbs";
+import { fetchDiscById } from "@/data-access/discs";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export const metadata: Metadata = {
   title: "Edit Disc",
@@ -13,8 +13,10 @@ export const metadata: Metadata = {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
-  const [disc] = await Promise.all([fetchDiscById(id)]);
-  const templates = await fetchFilteredTemplates("");
+  const [disc, templates] = await Promise.all([
+    fetchDiscById(id),
+    fetchFilteredTemplates(""),
+  ]);
 
   if (!disc) {
     notFound();
@@ -32,7 +34,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           },
         ]}
       />
-      <AddEditForm mode="edit" templates={templates} disc={disc} />
+      <AddEditForm disc={disc} templates={templates} />
     </main>
   );
 }

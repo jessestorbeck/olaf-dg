@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Trends, Disc } from "./definitions";
+
+import type { SelectDisc, NotificationPreviewDisc } from "@/db/schema";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,7 +39,7 @@ export const dateIsClose = (date: Date | null) => {
   }
 };
 
-export const formatPhone = (phone: Disc["phone"]) => {
+export const formatPhone = (phone: SelectDisc["phone"]) => {
   // If phone number isn't a string of 10 digits, throw an error
   if (!/^\d{10}$/.test(phone)) {
     throw new Error("Invalid phone number format; must be 10 digits");
@@ -53,7 +54,7 @@ export const templateVarClasses = {
   $plastic: "bg-green-500/50 rounded font-bold px-0.5",
   $mold: "bg-blue-500/50 rounded font-bold px-0.5",
   $laf: "bg-indigo-500/50 rounded font-bold px-0.5",
-  $held_until: "bg-purple-500/50 rounded font-bold px-0.5",
+  $heldUntil: "bg-purple-500/50 rounded font-bold px-0.5",
 };
 
 export const templateVarRegex = new RegExp(
@@ -84,15 +85,18 @@ export const splitTemplateContent = (
   return splitTemplate;
 };
 
-export const getTemplatePreview = (templateContent: string, disc: Disc) => {
+export const getTemplatePreview = (
+  templateContent: string,
+  disc: NotificationPreviewDisc | SelectDisc
+) => {
   const splitTemplate = splitTemplateContent(templateContent);
   const splitPreview = splitTemplate.map(({ substring, className }) => {
     if (templateVarRegex.test(substring)) {
       // For each template variable, replace it with the corresponding disc property
-      if (substring === "$held_until") {
+      if (substring === "$heldUntil") {
         return {
           substring:
-            disc.held_until?.toDateString() ?? new Date().toDateString(),
+            disc.heldUntil?.toDateString() ?? new Date().toDateString(),
           className,
         };
       } else if (substring === "$mold" && !disc.mold) {
@@ -101,7 +105,7 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
           className,
         };
       } else {
-        const discProp = substring.slice(1) as keyof Disc;
+        const discProp = substring.slice(1) as keyof NotificationPreviewDisc;
         const substringVal = disc[discProp]?.toString();
         return {
           substring: substringVal?.trim(),
@@ -121,10 +125,10 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
   splitTemplate.forEach(({ substring }, index) => {
     if (
       templateVarRegex.test(substring) &&
-      !disc[substring.slice(1) as keyof Disc] &&
-      // Don't include $mold or $held_until here,
+      !disc[substring.slice(1) as keyof NotificationPreviewDisc] &&
+      // Don't include $mold or $heldUntil here,
       // since they are auto-filled if undefined
-      !["$mold", "$held_until"].includes(substring)
+      !["$mold", "$heldUntil"].includes(substring)
     ) {
       const newSubstring = splitPreview[index - 1].substring?.slice(0, -1);
       splitPreview[index - 1].substring = newSubstring;
@@ -132,18 +136,4 @@ export const getTemplatePreview = (templateContent: string, disc: Disc) => {
   });
   // Finally, remove any empty substrings
   return splitPreview.filter(({ substring }) => substring !== "");
-};
-
-export const generateYAxis = (trends: Trends[]) => {
-  // Calculate what labels we need to display on the y-axis
-  // based on highest record and in 1000s
-  const yAxisLabels = [];
-  const highestRecord = Math.max(...trends.map((month) => month.found));
-  const topLabel = Math.ceil(highestRecord / 1000) * 1000;
-
-  for (let i = topLabel; i >= 0; i -= 1000) {
-    yAxisLabels.push(`$${i / 1000}K`);
-  }
-
-  return { yAxisLabels, topLabel };
 };

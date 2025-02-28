@@ -26,18 +26,21 @@ import {
 } from "@/app/ui/table";
 import { DataTablePagination } from "@/app/ui/data-table-pagination";
 import { ColumnVisibility } from "@/app/ui/column-visibility";
-import { Disc, Template } from "@/app/lib/definitions";
 import { ActionDropdown } from "./action-dropdown";
 import { PreviewDiscPopover } from "./preview-disc-popover";
 import { TemplateFilter } from "./template-filter";
+import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
 
-interface DataTableProps<TData extends Template, TValue> {
-  previewDiscState: [Disc, (disc: Disc) => void];
+interface DataTableProps<TData extends SelectTemplate, TValue> {
+  previewDiscState: [
+    NotificationPreviewDisc,
+    (disc: NotificationPreviewDisc) => void,
+  ];
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData extends Template, TValue>({
+export function DataTable<TData extends SelectTemplate, TValue>({
   previewDiscState,
   columns,
   data,

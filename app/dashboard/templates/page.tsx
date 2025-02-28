@@ -5,8 +5,8 @@ import { SearchBar } from "@/app/ui/search-bar";
 import { CreateTemplate } from "@/app/ui/templates/action-buttons";
 import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
-import { fetchFilteredTemplates } from "@/app/lib/data";
 import { DataTableWrapper } from "@/app/ui/templates/data-table-wrapper";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export const metadata: Metadata = {
   title: "Templates",

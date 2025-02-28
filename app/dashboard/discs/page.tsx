@@ -5,7 +5,7 @@ import { SearchBar } from "@/app/ui/search-bar";
 import { CreateDisc } from "@/app/ui/discs/action-buttons";
 import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
-import { fetchFilteredDiscs } from "@/app/lib/data";
+import { fetchFilteredDiscs } from "@/data-access/discs";
 import { columns } from "@/app/ui/discs/columns";
 import { DataTable } from "@/app/ui/discs/data-table";
 

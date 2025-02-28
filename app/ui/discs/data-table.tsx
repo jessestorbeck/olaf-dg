@@ -27,15 +27,15 @@ import {
 import { DataTablePagination } from "@/app/ui/data-table-pagination";
 import { DiscFilter } from "./disc-filter";
 import { ColumnVisibility } from "@/app/ui/column-visibility";
-import { Disc } from "@/app/lib/definitions";
 import { ActionDropdown } from "./action-dropdown";
+import { SelectDisc } from "@/db/schema";
 
-interface DataTableProps<TData extends Disc, TValue> {
+interface DataTableProps<TData extends SelectDisc, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
 }
 
-export function DataTable<TData extends Disc, TValue>({
+export function DataTable<TData extends SelectDisc, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {

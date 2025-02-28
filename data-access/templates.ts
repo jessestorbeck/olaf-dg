@@ -1,44 +1,79 @@
 "use server";
 
-import { sql } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { sql, eq, ne, ilike, inArray, and, or, desc } from "drizzle-orm";
 
-import { Template, ToastState } from "@/app/lib/definitions";
-import { AddEditTemplateSchema } from "@/app/lib/validation";
+import { db } from "@/db/index";
+import { templates, SelectTemplate } from "@/db/schema";
+import {
+  CreateTemplateSchema,
+  SelectTemplateSchema,
+  UpdateTemplateSchema,
+} from "@/db/validation";
+import { ToastState } from "@/app/ui/toast";
 
 // Placeholder until I rework auth
-const user_id = "35074acb-9121-4e31-9277-4db3241ef591";
+const userId = "35074acb-9121-4e31-9277-4db3241ef591";
 
-// Make sure the name doesn't exist already in the database
-const nameExists = async (name: string, ignoreId?: string) => {
+export async function fetchFilteredTemplates(
+  query: string
+): Promise<SelectTemplate[]> {
   try {
-    const query =
-      ignoreId ?
-        sql<Template>`
-          SELECT name
-          FROM templates
-          WHERE name = ${name} AND user_id = ${user_id} AND id <> ${ignoreId}
-        `
-      : sql<Template>`
-          SELECT name
-          FROM templates
-          WHERE name = ${name} AND user_id = ${user_id}
-        `;
+    const rows = await db
+      .select()
+      .from(templates)
+      .where(
+        and(
+          eq(templates.userId, userId),
+          or(
+            ilike(templates.name, `%${query}%`),
+            ilike(templates.content, `%${query}%`)
+          )
+        )
+      )
+      .orderBy(desc(templates.isDefault), desc(templates.createdAt));
+    return rows.map((row) => SelectTemplateSchema.parse(row));
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch templates");
+  }
+}
 
-    const existingTemplate = await query;
-    if (existingTemplate.rows.length > 0) {
-      return true;
-    } else {
-      return false;
-    }
+export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
+  try {
+    const rows = await db
+      .select()
+      .from(templates)
+      .where(and(eq(templates.id, id), eq(templates.userId, userId)))
+      .limit(1);
+    return SelectTemplateSchema.parse(rows[0]);
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch templates");
+  }
+}
+
+// Make sure the template name doesn't exist already in the database
+async function nameExists(name: string, ignoreId?: string): Promise<boolean> {
+  try {
+    const templateCount = await db.$count(
+      templates,
+      and(
+        eq(templates.name, name),
+        eq(templates.userId, userId),
+        // If ignoreId is provided, exclude that template from the count
+        ignoreId ? ne(templates.id, ignoreId) : undefined
+      )
+    );
+    return templateCount > 0;
   } catch (error) {
     console.error("Database error: failed to validate template name", error);
     throw new Error("Failed to validate template name");
   }
-};
+}
 
-export type addEditState = {
+export type AddTemplateState = {
   formData?: {
     name?: string;
     type?: string;
@@ -54,13 +89,13 @@ export type addEditState = {
   toast?: ToastState["toast"];
 };
 
-export async function createTemplate(
-  prevState: addEditState,
+export async function addTemplate(
+  prevState: AddTemplateState,
   formData: FormData
-): Promise<addEditState> {
+): Promise<AddTemplateState> {
   // Extend the template schema to include name validation
-  const TemplateServerSchema = AddEditTemplateSchema.extend({
-    name: AddEditTemplateSchema.shape.name
+  const TemplateServerSchema = CreateTemplateSchema.extend({
+    name: CreateTemplateSchema.shape.name
       // Just for server-side
       .refine(async (name) => !(await nameExists(name)), {
         message: "A template with that name already exists",
@@ -69,13 +104,11 @@ export async function createTemplate(
 
   // Validate the form data
   const validatedFields = await TemplateServerSchema.safeParseAsync({
-    name: formData.get("name"),
-    type: formData.get("type"),
-    content: formData.get("content"),
-    addAnother: formData.get("addAnother"),
+    ...Object.fromEntries(formData),
+    userId,
   });
 
-  // If form validation fails, return errors early; otherwise, continue
+  // If validation fails, return the errors and form data
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -88,19 +121,14 @@ export async function createTemplate(
     };
   }
 
-  // Prepare data for insertion into the database
-  const { name, type, content, addAnother } = validatedFields.data;
-  const is_default = false;
-
+  // Don't want to insert the addAnother field into the database
+  // It's only used after the insert to redirect or not
+  const { addAnother, ...dataToInsert } = validatedFields.data;
   // Insert data into the database
   try {
-    await sql`
-      INSERT INTO templates (user_id, name, type, content, is_default)
-      VALUES (${user_id}, ${name}, ${type}, ${content}, ${is_default})
-    `;
+    await db.insert(templates).values({ ...dataToInsert, userId });
   } catch (error) {
     console.error("Database error: failed to create template", error);
-    // If a database error occurs, return a more specific error
     return {
       toast: {
         title: "Database error",
@@ -111,7 +139,7 @@ export async function createTemplate(
   }
 
   const toastTitle = "Template added!";
-  const successMessage = `Added a new template "${name}" to your account`;
+  const successMessage = `Added a new template "${dataToInsert.name}" to your account`;
   const encodedTitle = encodeURIComponent(btoa(toastTitle));
   const encodedMessage = encodeURIComponent(btoa(successMessage));
 
@@ -133,16 +161,25 @@ export async function createTemplate(
   );
 }
 
-export async function updateTemplate(
+// Edit state is the same minus formData.addAnother and errors.addAnother
+export type EditTemplateState = Omit<
+  AddTemplateState,
+  "formData" | "errors"
+> & {
+  formData?: Omit<AddTemplateState["formData"], "addAnother">;
+  errors?: Omit<AddTemplateState["errors"], "addAnother">;
+};
+
+export async function editTemplate(
   id: string,
-  prevState: addEditState,
+  prevState: EditTemplateState,
   formData: FormData
-): Promise<addEditState> {
+): Promise<EditTemplateState> {
   // Extend the template schema to include name validation
   // This works just like in createTemplate, but we provide the id to
   // nameExists to ignore the name of the template being edited
-  const TemplateServerSchema = AddEditTemplateSchema.extend({
-    name: AddEditTemplateSchema.shape.name
+  const TemplateServerSchema = UpdateTemplateSchema.extend({
+    name: UpdateTemplateSchema.shape.name
       // Just for server-side
       .refine(async (name) => !(await nameExists(name, id)), {
         message: "A template with that name already exists",
@@ -150,11 +187,8 @@ export async function updateTemplate(
   });
 
   const validatedFields = await TemplateServerSchema.safeParseAsync({
-    name: formData.get("name"),
-    type: formData.get("type"),
-    content: formData.get("content"),
-    // Don't actually need this for editing, but it's required in the schema
-    addAnother: formData.get("addAnother"),
+    ...Object.fromEntries(formData),
+    userId,
   });
 
   if (!validatedFields.success) {
@@ -169,14 +203,11 @@ export async function updateTemplate(
     };
   }
 
-  const { name, type, content } = validatedFields.data;
-
   try {
-    await sql`
-      UPDATE templates
-      SET name = ${name}, type = ${type}, content = ${content}
-      WHERE id = ${id} AND user_id = ${user_id}
-    `;
+    await db
+      .update(templates)
+      .set(validatedFields.data)
+      .where(and(eq(templates.id, id), eq(templates.userId, userId)));
   } catch (error) {
     console.error("Database error: failed to update template", error);
     return {
@@ -189,7 +220,7 @@ export async function updateTemplate(
   }
 
   const toastTitle = "Template updated!";
-  const successMessage = `Updated your template "${name}"`;
+  const successMessage = `Updated your template "${validatedFields.data.name}"`;
   const encodedTitle = encodeURIComponent(btoa(toastTitle));
   const encodedMessage = encodeURIComponent(btoa(successMessage));
 
@@ -203,29 +234,38 @@ export async function updateTemplate(
 export async function makeDefault(id: string): Promise<ToastState> {
   try {
     // Set the template with the given id to be the default of that type
-    // and change any of the user's other templates of the same type to not be default
-    await sql`
-      UPDATE templates
-      SET is_default = CASE
-        WHEN id = ${id} THEN TRUE
-        ELSE FALSE
-      END
-      WHERE type = (SELECT type FROM templates WHERE id = ${id}) AND
-        user_id = ${user_id}
-    `;
-    // Get the template name and type for the toast message
-    const nameAndType = await sql`
-      SELECT name, type
-      FROM templates
-      WHERE id = ${id} AND user_id = ${user_id}
-    `;
-    const { name, type } = nameAndType.rows[0];
-
+    // and change any of the user's other templates of the same type to non-default
+    // Return the ids, names, and types of updated templates, which can be filtered
+    // to show the name and type of the now-default template in the toast
+    const templateType = db
+      .select({ type: templates.type })
+      .from(templates)
+      .where(and(eq(templates.id, id), eq(templates.userId, userId)));
+    const updatedTemplates = await db
+      .update(templates)
+      .set({
+        isDefault: sql<boolean>`CASE WHEN ${templates.id} = ${id} THEN TRUE ELSE FALSE END`,
+      })
+      .where(
+        and(eq(templates.type, templateType), eq(templates.userId, userId))
+      )
+      .returning({
+        id: templates.id,
+        name: templates.name,
+        type: templates.type,
+      });
+    const defaultTemplate = updatedTemplates.find(
+      (template) => template.id === id
+    );
+    // Throw an error if the target template wasn't found
+    if (!defaultTemplate) {
+      throw new Error("Template not found");
+    }
     revalidatePath("/dashboard/templates");
     return {
       toast: {
         title: "Template updated!",
-        message: `"${name}" is now the default for ${type} messages`,
+        message: `${defaultTemplate?.name} template is now your default for ${defaultTemplate?.type} notifications`,
       },
     };
   } catch (error) {
@@ -241,12 +281,9 @@ export async function makeDefault(id: string): Promise<ToastState> {
 
 export async function deleteTemplates(ids: string[]): Promise<ToastState> {
   try {
-    await sql`
-      DELETE FROM templates
-      WHERE id = ANY(${Object.assign(ids)}) AND
-        user_id = ${user_id} AND
-        is_default = FALSE
-    `;
+    await db
+      .delete(templates)
+      .where(and(eq(templates.userId, userId), inArray(templates.id, ids)));
     revalidatePath("/dashboard/templates");
     return {
       toast: {

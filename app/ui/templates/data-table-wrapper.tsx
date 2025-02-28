@@ -4,37 +4,23 @@ import { useState } from "react";
 
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
-import { Disc, Template } from "@/app/lib/definitions";
+import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
 
-interface DataTableWrapperProps<TData extends Template> {
+interface DataTableWrapperProps<TData extends SelectTemplate> {
   data: TData[];
 }
 
-export function DataTableWrapper({ data }: DataTableWrapperProps<Template>) {
-  const initialPreviewDisc: Disc = {
-    id: "35074acb-9121-4e31-9277-4db3241e9999",
-    user_id: "35074acb-9121-4e31-9277-4db3241ef591",
+export function DataTableWrapper({
+  data,
+}: DataTableWrapperProps<SelectTemplate>) {
+  const initialPreviewDisc: NotificationPreviewDisc = {
     name: "Paul",
-    phone: "1111111111",
     color: "yellow",
     plastic: "Z",
     brand: "Discraft",
     mold: "Luna",
-    location: "Shelf 1",
-    notes: "Paul's favorite disc",
-    notified: false,
-    reminded: false,
-    status: "awaiting pickup",
-    held_until: null,
-    created_at: new Date(),
-    updated_at: new Date(),
     laf: "Haple Mill",
-    notification_template: null,
-    notification_text: "",
-    reminder_template: null,
-    reminder_text: "",
-    extension_template: null,
-    extension_text: "",
+    heldUntil: null,
   };
   const [previewDisc, setPreviewDisc] = useState(initialPreviewDisc);
 

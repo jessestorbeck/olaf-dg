@@ -6,10 +6,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/ui/table";
-import { Template } from "@/app/lib/definitions";
+import { SelectTemplate } from "@/db/schema";
 import { splitTemplateContent } from "@/app/lib/utils";
 
-export function AlertTable({ templates }: { templates: Template[] }) {
+export function AlertTable({ templates }: { templates: SelectTemplate[] }) {
   return (
     <div className="max-h-48 overflow-y-scroll my-4">
       <Table className="w-full">
