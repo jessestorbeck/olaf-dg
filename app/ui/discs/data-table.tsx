@@ -28,7 +28,7 @@ import { DataTablePagination } from "@/app/ui/data-table-pagination";
 import { DiscFilter } from "./disc-filter";
 import { ColumnVisibility } from "@/app/ui/column-visibility";
 import { ActionDropdown } from "./action-dropdown";
-import { SelectDisc } from "@/db/schema";
+import { SelectDisc } from "@/db/schema/discs";
 
 interface DataTableProps<TData extends SelectDisc, TValue> {
   columns: ColumnDef<TData, TValue>[];

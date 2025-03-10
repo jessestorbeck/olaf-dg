@@ -5,7 +5,10 @@ import {
   createUpdateSchema,
 } from "drizzle-zod";
 
-import { users, templates, discs, trends } from "./schema";
+import { users } from "./schema/users";
+import { templates } from "./schema/templates";
+import { discs } from "./schema/discs";
+import { trends } from "./schema/trends";
 
 // Some reusable helpers for validation
 const templateVarMessage =
@@ -20,6 +23,36 @@ const tooLong = (maxLen: number) => {
 export const CreateUserSchema = createInsertSchema(users);
 export const SelectUserSchema = createSelectSchema(users);
 export const UpdateUserSchema = createUpdateSchema(users);
+
+// Auth schemas
+export const SignupSchema = z
+  .object({
+    name: z.string().min(1, { message: "Name is required" }),
+    email: z.string().email(),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters" })
+      .regex(/[a-z]/, { message: "Password must contain a lowercase letter" })
+      .regex(/[A-Z]/, { message: "Password must contain an uppercase letter" })
+      .regex(/\d/, { message: "Password must contain a number" })
+      .regex(/[^a-zA-Z\d\s]/, {
+        message: "Password must contain a special character",
+      }),
+    confirmPassword: z.string(),
+  })
+  .superRefine(({ confirmPassword, password }, ctx) => {
+    if (confirmPassword !== password) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Passwords do not match",
+        path: ["confirmPassword"],
+      });
+    }
+  });
+export const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
 
 // Template schemas
 export const CreateTemplateSchema = createInsertSchema(templates, {
@@ -38,7 +71,7 @@ export const CreateTemplateSchema = createInsertSchema(templates, {
 }).extend({
   addAnother: z.string().regex(/^(true|false)$/),
   // Unfortunately, it seems like there's no way to add a user-facing message
-  // to the ZodEnum which createInsetSchema infers from the database schema
+  // to the ZodEnum which createInsertSchema infers from the database schema
   // So we have to just overwrite it with the same enum and the desired message
   type: z.enum(["notification", "reminder", "extension"], {
     message: "You must select a template type",

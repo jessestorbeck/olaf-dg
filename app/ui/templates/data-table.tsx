@@ -29,7 +29,8 @@ import { ColumnVisibility } from "@/app/ui/column-visibility";
 import { ActionDropdown } from "./action-dropdown";
 import { PreviewDiscPopover } from "./preview-disc-popover";
 import { TemplateFilter } from "./template-filter";
-import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
+import { NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 
 interface DataTableProps<TData extends SelectTemplate, TValue> {
   previewDiscState: [

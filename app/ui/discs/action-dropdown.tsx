@@ -42,7 +42,7 @@ import {
 } from "@/data-access/discs";
 import { ToastState } from "@/app/ui/toast";
 import { dateHasPassed } from "@/app/lib/utils";
-import { SelectDisc } from "@/db/schema";
+import { SelectDisc } from "@/db/schema/discs";
 
 export function ActionDropdown({
   discs,

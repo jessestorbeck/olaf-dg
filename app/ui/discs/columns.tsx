@@ -24,7 +24,7 @@ import {
 import { Checkbox } from "@/app/ui/checkbox";
 import { ActionDropdown } from "./action-dropdown";
 import { LocalDateTime } from "@/app/ui/local-date-time";
-import { SelectDisc } from "@/db/schema";
+import { SelectDisc } from "@/db/schema/discs";
 
 const columnHeader = (column: Column<SelectDisc>, columnName: string) => {
   return (

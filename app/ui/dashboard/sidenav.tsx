@@ -1,9 +1,10 @@
 import Link from "next/link";
-import NavLinks from "@/app/ui/dashboard/nav-links";
-import Logo from "@/app/ui/logo";
 
+import { NavLinks } from "@/app/ui/dashboard/nav-links";
+import { Logo } from "@/app/ui/logo";
+import { Button } from "@/app/ui/button";
 import { Power } from "@/app/ui/icons";
-import { signOut } from "@/auth";
+import { signOut } from "@/data-access/users";
 
 export default function SideNav() {
   return (
@@ -25,10 +26,13 @@ export default function SideNav() {
             await signOut();
           }}
         >
-          <button className="flex h-[48px] w-full grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-emerald-200 hover:text-emerald-700 md:flex-none md:justify-start md:p-2 md:px-3">
+          <Button
+            variant="ghost"
+            className="flex h-[48px] w-full grow items-center justify-center gap-2 rounded-md bg-gray-50 p-3 text-sm font-medium hover:bg-emerald-200 hover:text-emerald-700 md:flex-none md:justify-start md:p-2 md:px-3"
+          >
             <Power className="w-6" />
             <div className="hidden md:block">Sign Out</div>
-          </button>
+          </Button>
         </form>
       </div>
     </div>

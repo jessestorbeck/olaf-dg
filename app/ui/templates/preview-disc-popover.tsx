@@ -3,7 +3,7 @@ import { Input } from "@/app/ui/input";
 import { Label } from "@/app/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/ui/popover";
 import { templateVarClasses } from "@/app/lib/utils";
-import { NotificationPreviewDisc } from "@/db/schema";
+import { NotificationPreviewDisc } from "@/db/schema/discs";
 
 export function PreviewDiscPopover({
   previewDiscState,
@@ -102,7 +102,7 @@ export function PreviewDiscPopover({
             </Label>
             <Input
               id="laf"
-              value={previewDisc.laf}
+              value={previewDisc.laf || ""}
               onChange={(e) =>
                 setPreviewDisc({
                   ...previewDisc,

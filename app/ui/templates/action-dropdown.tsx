@@ -30,7 +30,7 @@ import { AlertTable } from "./alert-table";
 import { useToast } from "@/app/hooks/use-toast";
 import { makeDefault, deleteTemplates } from "@/data-access/templates";
 import { ToastState } from "@/app/ui/toast";
-import { SelectTemplate } from "@/db/schema";
+import { SelectTemplate } from "@/db/schema/templates";
 
 export function ActionDropdown({
   templates,

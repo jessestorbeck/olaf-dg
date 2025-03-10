@@ -1,8 +1,10 @@
-import bcrypt from "bcrypt";
 import { drizzle } from "drizzle-orm/vercel-postgres";
 import { config } from "dotenv";
 
-import { users, templates, discs, trends } from "./schema";
+import { users } from "./schema/users";
+import { templates } from "./schema/templates";
+import { discs } from "./schema/discs";
+import { trends } from "./schema/trends";
 import { seedUsers, seedTemplates, seedDiscs, seedTrends } from "./seed-data";
 
 config({ path: ".env" });
@@ -10,12 +12,7 @@ config({ path: ".env" });
 async function main() {
   const db = drizzle();
   console.log("Seeding database...");
-  await db.insert(users).values(
-    seedUsers.map((user) => ({
-      ...user,
-      password: bcrypt.hashSync(user.password, 10),
-    }))
-  );
+  await db.insert(users).values(seedUsers);
   console.log("Users table seeded successfully");
   await db.insert(templates).values(seedTemplates);
   console.log("Templates table seeded successfully");

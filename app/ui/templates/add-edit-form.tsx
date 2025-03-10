@@ -35,7 +35,8 @@ import {
   EditTemplateState,
 } from "@/data-access/templates";
 import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
-import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
+import { NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 import { CreateTemplateSchema, UpdateTemplateSchema } from "@/db/validation";
 
 export default function AddEditForm({

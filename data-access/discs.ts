@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { sql, eq, ilike, inArray, and, or, desc } from "drizzle-orm";
 
 import { db } from "@/db/index";
-import { discs, users, SelectDisc } from "@/db/schema";
+import { discs, SelectDisc } from "@/db/schema/discs";
+import { users } from "@/db/schema/users";
 import {
   CreateDiscSchema,
   SelectDiscSchema,
@@ -181,7 +182,6 @@ export async function addDisc(
 
   // If validation fails, return the errors and form data
   if (!validatedFields.success) {
-    console.log(Object.fromEntries(formData));
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       toast: {

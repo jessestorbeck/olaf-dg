@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-import type { SelectDisc, NotificationPreviewDisc } from "@/db/schema";
+import type { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

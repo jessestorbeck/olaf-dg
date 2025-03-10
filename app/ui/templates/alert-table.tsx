@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/app/ui/table";
-import { SelectTemplate } from "@/db/schema";
+import { SelectTemplate } from "@/db/schema/templates";
 import { splitTemplateContent } from "@/app/lib/utils";
 
 export function AlertTable({ templates }: { templates: SelectTemplate[] }) {

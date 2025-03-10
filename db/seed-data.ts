@@ -1,4 +1,7 @@
-import { InsertUser, InsertTemplate, InsertDisc, InsertTrend } from "./schema";
+import { InsertUser } from "./schema/users";
+import { InsertTemplate } from "./schema/templates";
+import { InsertDisc } from "./schema/discs";
+import { InsertTrend } from "./schema/trends";
 
 export const seedUsers: InsertUser[] = [
   {
@@ -6,14 +9,12 @@ export const seedUsers: InsertUser[] = [
     name: "Jesse",
     laf: "Haple Mill Disc Golf",
     email: "jesse@fakedomain.com",
-    password: "123456",
   },
   {
     id: "35074acb-9121-4e31-9277-4db3241ef593",
     name: "Alexia",
     laf: "Meadowstream Farms Disc Golf",
     email: "alexia@fakedomain.com",
-    password: "123456",
   },
 ];
 

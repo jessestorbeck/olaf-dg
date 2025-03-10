@@ -20,7 +20,8 @@ import {
 } from "@/app/ui/icons";
 import { LocalDateTime } from "@/app/ui/local-date-time";
 import { ActionDropdown } from "./action-dropdown";
-import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
+import { NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 
 const PreviewCell = ({
   content,

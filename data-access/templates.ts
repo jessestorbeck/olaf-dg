@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { sql, eq, ne, ilike, inArray, and, or, desc } from "drizzle-orm";
 
 import { db } from "@/db/index";
-import { templates, SelectTemplate } from "@/db/schema";
+import { templates, SelectTemplate } from "@/db/schema/templates";
 import {
   CreateTemplateSchema,
   SelectTemplateSchema,

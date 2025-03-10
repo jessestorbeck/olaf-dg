@@ -33,11 +33,8 @@ import {
   EditDiscState,
 } from "@/data-access/discs";
 import { CreateDiscSchema, UpdateDiscSchema } from "@/db/validation";
-import {
-  SelectTemplate,
-  SelectDisc,
-  NotificationPreviewDisc,
-} from "@/db/schema";
+import { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 import { getTemplatePreview } from "@/app/lib/utils";
 
 export default function AddEditForm({

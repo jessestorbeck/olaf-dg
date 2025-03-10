@@ -4,7 +4,8 @@ import { useState } from "react";
 
 import { DataTable } from "./data-table";
 import { columns } from "./columns";
-import { SelectTemplate, NotificationPreviewDisc } from "@/db/schema";
+import { NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 
 interface DataTableWrapperProps<TData extends SelectTemplate> {
   data: TData[];

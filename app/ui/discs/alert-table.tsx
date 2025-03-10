@@ -7,7 +7,7 @@ import {
   TableRow,
 } from "@/app/ui/table";
 import { formatPhone } from "@/app/lib/utils";
-import { SelectDisc } from "@/db/schema";
+import { SelectDisc } from "@/db/schema/discs";
 
 export function AlertTable({ discs }: { discs: SelectDisc[] }) {
   return (

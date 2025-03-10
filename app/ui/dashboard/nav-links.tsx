@@ -20,7 +20,7 @@ const links = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-export default function NavLinks() {
+export function NavLinks() {
   const pathname = usePathname();
   return (
     <>
