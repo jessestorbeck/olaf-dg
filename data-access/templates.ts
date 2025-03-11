@@ -12,14 +12,15 @@ import {
   UpdateTemplateSchema,
 } from "@/db/validation";
 import { ToastState } from "@/app/ui/toast";
-
-// Placeholder until I rework auth
-const userId = "35074acb-9121-4e31-9277-4db3241ef591";
+import { fetchUserId } from "@/data-access/users";
 
 export async function fetchFilteredTemplates(
   query: string
 ): Promise<SelectTemplate[]> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+
     const rows = await db
       .select()
       .from(templates)
@@ -42,6 +43,9 @@ export async function fetchFilteredTemplates(
 
 export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+
     const rows = await db
       .select()
       .from(templates)
@@ -57,6 +61,9 @@ export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
 // Make sure the template name doesn't exist already in the database
 async function nameExists(name: string, ignoreId?: string): Promise<boolean> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+
     const templateCount = await db.$count(
       templates,
       and(
@@ -87,46 +94,72 @@ export type AddTemplateState = {
     addAnother?: string[];
   };
   toast?: ToastState["toast"];
+  success?: boolean;
 };
 
 export async function addTemplate(
   prevState: AddTemplateState,
   formData: FormData
 ): Promise<AddTemplateState> {
-  // Extend the template schema to include name validation
-  const TemplateServerSchema = CreateTemplateSchema.extend({
-    name: CreateTemplateSchema.shape.name
-      // Just for server-side
-      .refine(async (name) => !(await nameExists(name)), {
-        message: "A template with that name already exists",
-      }),
-  });
-
-  // Validate the form data
-  const validatedFields = await TemplateServerSchema.safeParseAsync({
-    ...Object.fromEntries(formData),
-    userId,
-  });
-
-  // If validation fails, return the errors and form data
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      toast: {
-        title: "Error: failed to create template",
-        message: "Required field(s) missing",
-      },
-      // Send the form data back to state to repopulate the form
-      formData: Object.fromEntries(formData),
-    };
-  }
-
-  // Don't want to insert the addAnother field into the database
-  // It's only used after the insert to redirect or not
-  const { addAnother, ...dataToInsert } = validatedFields.data;
-  // Insert data into the database
+  // For toast after redirect
+  // Outside try block, since redirect has to be outside the try block
+  let encodedTitle: string;
+  let encodedMessage: string;
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Extend the template schema to include name validation
+    const TemplateServerSchema = CreateTemplateSchema.extend({
+      name: CreateTemplateSchema.shape.name
+        // Just for server-side
+        .refine(async (name) => !(await nameExists(name)), {
+          message: "A template with that name already exists",
+        }),
+    });
+
+    // Validate the form data
+    const validatedFields = await TemplateServerSchema.safeParseAsync({
+      ...Object.fromEntries(formData),
+      userId,
+    });
+
+    // If validation fails, return the errors and form data
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        toast: {
+          title: "Error: failed to create template",
+          message: "Required field(s) missing",
+        },
+        // Send the form data back to state to repopulate the form
+        formData: Object.fromEntries(formData),
+      };
+    }
+
+    // Don't want to insert the addAnother field into the database
+    // It's only used after the insert to redirect or not
+    const { addAnother, ...dataToInsert } = validatedFields.data;
+
+    // Insert data into the database
     await db.insert(templates).values({ ...dataToInsert, userId });
+
+    // Prepare toast
+    const toastTitle = "Template added!";
+    const successMessage = `Added a new template "${dataToInsert.name}" to your account`;
+    encodedTitle = encodeURIComponent(btoa(toastTitle));
+    encodedMessage = encodeURIComponent(btoa(successMessage));
+
+    if (addAnother === "true") {
+      // If user wants to add another, don't redirect and clear the form
+      return {
+        toast: {
+          title: toastTitle,
+          message: successMessage,
+        },
+        formData: {},
+        success: true,
+      };
+    }
   } catch (error) {
     console.error("Database error: failed to create template", error);
     return {
@@ -135,22 +168,6 @@ export async function addTemplate(
         message: "Failed to create template",
       },
       formData: Object.fromEntries(formData),
-    };
-  }
-
-  const toastTitle = "Template added!";
-  const successMessage = `Added a new template "${dataToInsert.name}" to your account`;
-  const encodedTitle = encodeURIComponent(btoa(toastTitle));
-  const encodedMessage = encodeURIComponent(btoa(successMessage));
-
-  if (addAnother === "true") {
-    // If user wants to add another, don't redirect and clear the form
-    return {
-      toast: {
-        title: toastTitle,
-        message: successMessage,
-      },
-      formData: {},
     };
   }
   // Revalidate the cache for the templates page and redirect the user
@@ -175,39 +192,50 @@ export async function editTemplate(
   prevState: EditTemplateState,
   formData: FormData
 ): Promise<EditTemplateState> {
-  // Extend the template schema to include name validation
-  // This works just like in createTemplate, but we provide the id to
-  // nameExists to ignore the name of the template being edited
-  const TemplateServerSchema = UpdateTemplateSchema.extend({
-    name: UpdateTemplateSchema.shape.name
-      // Just for server-side
-      .refine(async (name) => !(await nameExists(name, id)), {
-        message: "A template with that name already exists",
-      }),
-  });
-
-  const validatedFields = await TemplateServerSchema.safeParseAsync({
-    ...Object.fromEntries(formData),
-    userId,
-  });
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      toast: {
-        title: "Error: failed to update template",
-        message: "Required field(s) missing",
-      },
-      // Send the form data back to state to repopulate the form
-      formData: Object.fromEntries(formData),
-    };
-  }
-
+  let encodedTitle: string;
+  let encodedMessage: string;
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+
+    // Extend the template schema to include name validation
+    // This works just like in createTemplate, but we provide the id to
+    // nameExists to ignore the name of the template being edited
+    const TemplateServerSchema = UpdateTemplateSchema.extend({
+      name: UpdateTemplateSchema.shape.name
+        // Just for server-side
+        .refine(async (name) => !(await nameExists(name, id)), {
+          message: "A template with that name already exists",
+        }),
+    });
+
+    const validatedFields = await TemplateServerSchema.safeParseAsync({
+      ...Object.fromEntries(formData),
+      userId,
+    });
+
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        toast: {
+          title: "Error: failed to update template",
+          message: "Required field(s) missing",
+        },
+        // Send the form data back to state to repopulate the form
+        formData: Object.fromEntries(formData),
+      };
+    }
+
     await db
       .update(templates)
       .set(validatedFields.data)
       .where(and(eq(templates.id, id), eq(templates.userId, userId)));
+
+    // Prepare toast
+    const toastTitle = "Template updated!";
+    const successMessage = `Updated your template "${validatedFields.data.name}"`;
+    encodedTitle = encodeURIComponent(btoa(toastTitle));
+    encodedMessage = encodeURIComponent(btoa(successMessage));
   } catch (error) {
     console.error("Database error: failed to update template", error);
     return {
@@ -218,14 +246,7 @@ export async function editTemplate(
       formData: Object.fromEntries(formData),
     };
   }
-
-  const toastTitle = "Template updated!";
-  const successMessage = `Updated your template "${validatedFields.data.name}"`;
-  const encodedTitle = encodeURIComponent(btoa(toastTitle));
-  const encodedMessage = encodeURIComponent(btoa(successMessage));
-
   revalidatePath("/dashboard/templates");
-  // Pass the message for the toast as a query parameter
   redirect(
     `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
@@ -233,6 +254,8 @@ export async function editTemplate(
 
 export async function makeDefault(id: string): Promise<ToastState> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     // Set the template with the given id to be the default of that type
     // and change any of the user's other templates of the same type to non-default
     // Return the ids, names, and types of updated templates, which can be filtered
@@ -281,6 +304,9 @@ export async function makeDefault(id: string): Promise<ToastState> {
 
 export async function deleteTemplates(ids: string[]): Promise<ToastState> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Delete the templates with the given ids
     await db
       .delete(templates)
       .where(and(eq(templates.userId, userId), inArray(templates.id, ids)));

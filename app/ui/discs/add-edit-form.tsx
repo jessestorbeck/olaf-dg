@@ -37,6 +37,17 @@ import { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
 import { getTemplatePreview } from "@/app/lib/utils";
 
+const formDefaults = {
+  name: "",
+  phone: "",
+  color: "",
+  brand: "",
+  plastic: "",
+  mold: "",
+  location: "",
+  notes: "",
+};
+
 export default function AddEditForm({
   disc, // Supply disc if editing
   templates,
@@ -105,14 +116,9 @@ export default function AddEditForm({
     resolver: zodResolver(DiscSchema),
     mode: "onTouched",
     defaultValues: {
-      name: "",
-      phone: "",
-      color: "",
-      brand: "",
-      plastic: "",
-      mold: "",
-      location: "",
-      notes: "",
+      ...formDefaults,
+      // Template-related defaults get defined here inside the component,
+      // since they depend on the templates prop
       // Set default values for notification templates
       notificationTemplate: notificationTemplates[0].id,
       reminderTemplate: reminderTemplates[0].id,
@@ -235,7 +241,6 @@ export default function AddEditForm({
   }, [state, toast]);
 
   // For server-side error messages
-  // and form reset on successful submission
   useEffect(() => {
     form.reset(state.formData);
     if (state.errors) {
@@ -246,6 +251,14 @@ export default function AddEditForm({
       }
     }
   }, [state.errors, state.formData, form]);
+
+  // For clearing the form after successful addition
+  // Only relevant if the user is adding another disc
+  useEffect(() => {
+    if (state.success) {
+      form.reset(formDefaults);
+    }
+  }, [state, form]);
 
   return (
     <Form {...form}>

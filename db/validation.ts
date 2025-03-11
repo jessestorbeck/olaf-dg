@@ -60,7 +60,13 @@ export const CreateTemplateSchema = createInsertSchema(templates, {
     schema
       .trim()
       .min(1, { message: "Your template must have a name" })
-      .max(maxLenField, tooLong(maxLenField)),
+      .max(maxLenField, tooLong(maxLenField))
+      // Templates can't be called "custom" (case-insensitive),
+      // since "custom" is reserved for custom messages added to specific discs
+      .refine((val) => val.toLowerCase() !== "custom", {
+        message: `Template cannot be named "custom" (case-insensitive)`,
+      }),
+
   content: (schema) =>
     schema
       .trim()

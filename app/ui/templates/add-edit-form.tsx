@@ -39,6 +39,12 @@ import { NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
 import { CreateTemplateSchema, UpdateTemplateSchema } from "@/db/validation";
 
+const formDefaults = {
+  name: "",
+  type: undefined,
+  content: "",
+};
+
 export default function AddEditForm({
   template, // Supply template if editing
   templateNames,
@@ -74,9 +80,7 @@ export default function AddEditForm({
     resolver: zodResolver(TemplateClientSchema),
     mode: "onTouched",
     defaultValues: {
-      name: "",
-      type: undefined,
-      content: "",
+      ...formDefaults,
       // Override with template values if editing
       ...template,
       // Have to set a value here to avoid controlled input error
@@ -96,7 +100,6 @@ export default function AddEditForm({
   }, [state, toast]);
 
   // For server-side error messages
-  // and form reset on successful submission
   useEffect(() => {
     form.reset(state.formData);
     if (state.errors) {
@@ -107,6 +110,14 @@ export default function AddEditForm({
       }
     }
   }, [state.errors, state.formData, form]);
+
+  // For clearing the form after successful addition
+  // Only relevant if the user is adding another template
+  useEffect(() => {
+    if (state.success) {
+      form.reset(formDefaults);
+    }
+  }, [state, form]);
 
   // For managing template preview
   const initialPreviewDisc: NotificationPreviewDisc = {

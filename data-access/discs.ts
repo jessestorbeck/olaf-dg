@@ -15,13 +15,12 @@ import {
 } from "@/db/validation";
 import { dateHasPassed } from "@/app/lib/utils";
 import { ToastState } from "@/app/ui/toast";
-import { fetchHoldDuration } from "./users";
-
-// Placeholder until I rework auth
-const userId = "35074acb-9121-4e31-9277-4db3241ef591";
+import { fetchUserId, fetchHoldDuration } from "@/data-access/users";
 
 export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     // Subquery to select the user lafs
     const userLafs = db
       .select({ id: users.id, laf: users.laf })
@@ -62,6 +61,8 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
 
 export async function fetchDiscById(id: string): Promise<SelectDisc | void> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     // Subquery to select the user lafs
     const userLafs = db
       .select({ id: users.id, laf: users.laf })
@@ -90,6 +91,8 @@ export async function fetchDiscById(id: string): Promise<SelectDisc | void> {
 
 export async function fetchCardData() {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     // Select just phone numbers, statuses, and heldUntil dates
     // Necessary filtering can be done post-query
     const data = await db
@@ -168,37 +171,71 @@ export type AddDiscState = {
     addAnother?: string[];
   };
   toast?: ToastState["toast"];
+  success?: boolean;
 };
 
 export async function addDisc(
   prevState: AddDiscState,
   formData: FormData
 ): Promise<AddDiscState> {
-  // Validate form data
-  const validatedFields = CreateDiscSchema.safeParse({
-    ...Object.fromEntries(formData),
-    userId,
-  });
-
-  // If validation fails, return the errors and form data
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      toast: {
-        title: "Error: failed to create disc",
-        message: "Required field(s) missing",
-      },
-      // Send the form data back to state to repopulate the form
-      formData: Object.fromEntries(formData),
-    };
-  }
-
-  // Don't want to insert the addAnother field into the database
-  // It's only used after the insert to redirect or not
-  const { addAnother, ...dataToInsert } = validatedFields.data;
-  // Insert data into the database
+  // For toast after redirect
+  // Outside try block, since redirect has to be outside the try block
+  let encodedTitle: string;
+  let encodedMessage: string;
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Validate form data
+    const validatedFields = CreateDiscSchema.safeParse({
+      ...Object.fromEntries(formData),
+      userId,
+    });
+
+    // If validation fails, return the errors and form data
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        toast: {
+          title: "Error: failed to create disc",
+          message: "Required field(s) missing",
+        },
+        // Send the form data back to state to repopulate the form
+        formData: Object.fromEntries(formData),
+      };
+    }
+
+    // Don't want to insert the addAnother field into the database
+    // It's only used after the insert to redirect or not
+    const { addAnother, ...dataToInsert } = validatedFields.data;
+
+    // Insert data into the database
     await db.insert(discs).values({ ...dataToInsert, userId });
+
+    // Prepare toast
+    const discString = [
+      dataToInsert.color,
+      dataToInsert.brand,
+      dataToInsert.plastic,
+      dataToInsert.mold || "disc",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const toastTitle = "Disc added!";
+    const successMessage = `Added a new ${discString} to your inventory`;
+    encodedTitle = encodeURIComponent(btoa(toastTitle));
+    encodedMessage = encodeURIComponent(btoa(successMessage));
+
+    if (addAnother === "true") {
+      // If user wants to add another, don't redirect and clear the form
+      return {
+        toast: {
+          title: toastTitle,
+          message: successMessage,
+        },
+        formData: {},
+        success: true,
+      };
+    }
   } catch (error) {
     console.error("Database error: failed to create disc", error);
     return {
@@ -207,29 +244,6 @@ export async function addDisc(
         message: "Failed to create disc",
       },
       formData: Object.fromEntries(formData),
-    };
-  }
-  const discString = [
-    dataToInsert.color,
-    dataToInsert.brand,
-    dataToInsert.plastic,
-    dataToInsert.mold || "disc",
-  ]
-    .filter(Boolean)
-    .join(" ");
-  const toastTitle = "Disc added!";
-  const successMessage = `Added a new ${discString} to your inventory`;
-  const encodedTitle = encodeURIComponent(btoa(toastTitle));
-  const encodedMessage = encodeURIComponent(btoa(successMessage));
-
-  if (addAnother === "true") {
-    // If user wants to add another, don't redirect and clear the form
-    return {
-      toast: {
-        title: toastTitle,
-        message: successMessage,
-      },
-      formData: {},
     };
   }
   // Revalidate the cache for the discs page and redirect the user
@@ -249,27 +263,50 @@ export async function editDisc(
   prevState: EditDiscState,
   formData: FormData
 ): Promise<EditDiscState> {
-  const validatedFields = UpdateDiscSchema.safeParse(
-    Object.fromEntries(formData)
-  );
-
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      toast: {
-        title: "Error: failed to update disc",
-        message: "Required field(s) missing",
-      },
-      // Send the form data back to state to repopulate the form
-      formData: Object.fromEntries(formData),
-    };
-  }
+  // For toast after redirect
+  // Outside try block, since redirect has to be outside the try block
+  let encodedTitle: string;
+  let encodedMessage: string;
 
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Validate form data
+    const validatedFields = UpdateDiscSchema.safeParse(
+      Object.fromEntries(formData)
+    );
+
+    if (!validatedFields.success) {
+      return {
+        errors: validatedFields.error.flatten().fieldErrors,
+        toast: {
+          title: "Error: failed to update disc",
+          message: "Required field(s) missing",
+        },
+        // Send the form data back to state to repopulate the form
+        formData: Object.fromEntries(formData),
+      };
+    }
+
     await db
       .update(discs)
       .set(validatedFields.data)
       .where(and(eq(discs.id, id), eq(discs.userId, userId)));
+
+    // Prepare toast
+    const discString = [
+      validatedFields.data.color,
+      validatedFields.data.brand,
+      validatedFields.data.plastic,
+      validatedFields.data.mold || "disc",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    const toastTitle = "Disc updated!";
+    const successMessage = `Updated an existing ${discString} in your inventory`;
+    encodedTitle = encodeURIComponent(btoa(toastTitle));
+    encodedMessage = encodeURIComponent(btoa(successMessage));
   } catch (error) {
     console.error("Database error: failed to update disc", error);
     return {
@@ -280,22 +317,7 @@ export async function editDisc(
       formData: Object.fromEntries(formData),
     };
   }
-  const discString = [
-    validatedFields.data.color,
-    validatedFields.data.brand,
-    validatedFields.data.plastic,
-    validatedFields.data.mold || "disc",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const toastTitle = "Disc updated!";
-  const successMessage = `Updated an existing ${discString} in your inventory`;
-  const encodedTitle = encodeURIComponent(btoa(toastTitle));
-  const encodedMessage = encodeURIComponent(btoa(successMessage));
-
   revalidatePath("/dashboard/discs");
-  // Pass the message for the toast as a query parameter
   redirect(`/dashboard/discs?title=${encodedTitle}&message=${encodedMessage}`);
 }
 
@@ -305,8 +327,10 @@ export async function sendNotifications(
 ): Promise<ToastState> {
   const notificationField = mode === "initial" ? "notified" : "reminded";
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+
     const holdDuration = await fetchHoldDuration();
-    console.log(holdDuration);
     await db
       .update(discs)
       .set({
@@ -339,18 +363,20 @@ export async function addTimeToDiscs(
   ids: string[],
   days: number
 ): Promise<ToastState> {
-  const validatedDays = DaysSchema.safeParse(days);
-
-  if (!validatedDays.success) {
-    return {
-      errors: validatedDays.error.flatten(),
-      toast: {
-        title: "Error: invalid days",
-        message: "Days must be a positive whole number <= 365",
-      },
-    };
-  }
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Validate extension days
+    const validatedDays = DaysSchema.safeParse(days);
+    if (!validatedDays.success) {
+      return {
+        errors: validatedDays.error.flatten(),
+        toast: {
+          title: "Error: invalid days",
+          message: "Days must be a positive whole number <= 365",
+        },
+      };
+    }
     await db
       .update(discs)
       .set({
@@ -380,6 +406,9 @@ export async function updateDiscStatus(
   status: "awaiting pickup" | "picked up" | "archived"
 ): Promise<ToastState> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
+    // Validate disc status
     const validatedStatus = UpdateDiscSchema.shape.status.parse(status);
     await db
       .update(discs)
@@ -407,6 +436,8 @@ export async function updateDiscStatus(
 
 export async function deleteDiscs(ids: string[]): Promise<ToastState> {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     await db
       .delete(discs)
       .where(and(eq(discs.userId, userId), inArray(discs.id, ids)));

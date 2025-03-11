@@ -7,28 +7,29 @@ import { APIError } from "better-auth/api";
 
 import { auth } from "@/app/lib/auth";
 import { db } from "@/db/index";
-import { users, SelectUser } from "@/db/schema/users";
+import { users } from "@/db/schema/users";
 import { SignupSchema, LoginSchema } from "@/db/validation";
 
-// Placeholder until I rework auth
-const userId = "35074acb-9121-4e31-9277-4db3241ef591";
-
-export async function getUser(email: string): Promise<SelectUser> {
+export async function fetchUserId(): Promise<string | void> {
   try {
-    const user = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-    return user[0];
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    const userId = session?.user.id;
+    if (!userId) {
+      throw new Error("Failed to authenticate user");
+    }
+    return userId;
   } catch (error) {
-    console.error("Failed to fetch user:", error);
-    throw new Error("Failed to fetch user.");
+    console.error("Error fetching user:", error);
+    throw new Error("Failed to fetch user");
   }
 }
 
 export async function fetchHoldDuration() {
   try {
+    // Auth check
+    const userId = (await fetchUserId()) ?? "";
     const rows = await db
       .select({ holdDuration: users.holdDuration })
       .from(users)
