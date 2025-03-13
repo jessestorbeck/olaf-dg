@@ -19,7 +19,7 @@ export async function fetchFilteredTemplates(
 ): Promise<SelectTemplate[]> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
 
     const rows = await db
       .select()
@@ -44,7 +44,7 @@ export async function fetchFilteredTemplates(
 export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
 
     const rows = await db
       .select()
@@ -62,7 +62,7 @@ export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
 async function nameExists(name: string, ignoreId?: string): Promise<boolean> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
 
     const templateCount = await db.$count(
       templates,
@@ -107,7 +107,7 @@ export async function addTemplate(
   let encodedMessage: string;
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Extend the template schema to include name validation
     const TemplateServerSchema = CreateTemplateSchema.extend({
       name: CreateTemplateSchema.shape.name
@@ -196,7 +196,7 @@ export async function editTemplate(
   let encodedMessage: string;
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
 
     // Extend the template schema to include name validation
     // This works just like in createTemplate, but we provide the id to
@@ -255,7 +255,7 @@ export async function editTemplate(
 export async function makeDefault(id: string): Promise<ToastState> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Set the template with the given id to be the default of that type
     // and change any of the user's other templates of the same type to non-default
     // Return the ids, names, and types of updated templates, which can be filtered
@@ -305,7 +305,7 @@ export async function makeDefault(id: string): Promise<ToastState> {
 export async function deleteTemplates(ids: string[]): Promise<ToastState> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Delete the templates with the given ids
     await db
       .delete(templates)

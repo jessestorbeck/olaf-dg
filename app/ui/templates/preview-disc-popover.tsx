@@ -96,22 +96,6 @@ export function PreviewDiscPopover({
               className="col-span-3 h-8"
             />
           </div>
-          <div className="grid grid-cols-4 items-center">
-            <Label htmlFor="laf">
-              <span className={templateVarClasses.$laf}>LAF</span>
-            </Label>
-            <Input
-              id="laf"
-              value={previewDisc.laf || ""}
-              onChange={(e) =>
-                setPreviewDisc({
-                  ...previewDisc,
-                  laf: e.target.value,
-                })
-              }
-              className="col-span-3 h-8"
-            />
-          </div>
         </div>
       </PopoverContent>
     </Popover>

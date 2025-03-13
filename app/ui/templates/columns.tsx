@@ -22,21 +22,24 @@ import { LocalDateTime } from "@/app/ui/local-date-time";
 import { ActionDropdown } from "./action-dropdown";
 import { NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
+import { UserSettings } from "@/db/schema/users";
 
 const PreviewCell = ({
   content,
   previewDisc,
+  userSettings,
 }: {
   content: string;
   previewDisc: NotificationPreviewDisc;
+  userSettings: UserSettings;
 }) => {
   const [preview, setPreview] = useState(
-    getTemplatePreview(content, previewDisc)
+    getTemplatePreview(content, previewDisc, userSettings)
   );
 
   useEffect(() => {
-    setPreview(getTemplatePreview(content, previewDisc));
-  }, [content, previewDisc]);
+    setPreview(getTemplatePreview(content, previewDisc, userSettings));
+  }, [content, previewDisc, userSettings]);
 
   return (
     <div>
@@ -73,7 +76,8 @@ const columnHeader = (column: Column<SelectTemplate>, columnName: string) => {
 };
 
 export function columns(
-  previewDisc: NotificationPreviewDisc
+  previewDisc: NotificationPreviewDisc,
+  userSettings: UserSettings
 ): ColumnDef<SelectTemplate>[] {
   return [
     {
@@ -135,7 +139,13 @@ export function columns(
       header: ({ column }) => columnHeader(column, "Preview"),
       cell: ({ row }) => {
         const content: string = row.getValue("content");
-        return <PreviewCell content={content} previewDisc={previewDisc} />;
+        return (
+          <PreviewCell
+            content={content}
+            previewDisc={previewDisc}
+            userSettings={userSettings}
+          />
+        );
       },
     },
     {

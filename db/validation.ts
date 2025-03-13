@@ -12,17 +12,26 @@ import { trends } from "./schema/trends";
 
 // Some reusable helpers for validation
 const templateVarMessage =
-  "Your template must reference the lost-and-found name with $laf and the held-until date with $held_until";
+  "Must reference the lost-and-found name with $laf and the held-until date with $held_until";
 const maxLenField = 50;
 const maxLenText = 500;
 const tooLong = (maxLen: number) => {
-  return { message: `Must be less than ${maxLen} characters` };
+  return { message: `Cannot be more than ${maxLen} characters` };
 };
 
 // User schemas
 export const CreateUserSchema = createInsertSchema(users);
 export const SelectUserSchema = createSelectSchema(users);
 export const UpdateUserSchema = createUpdateSchema(users);
+
+export const UserSettingsSchema = z.object({
+  holdDuration: z
+    .number()
+    .int({ message: "Must be a whole number" })
+    .min(30, { message: "Must be at least 30 days" })
+    .max(365, { message: "Cannot be more than 365 days" }),
+  laf: z.string().max(maxLenField, tooLong(maxLenField)),
+});
 
 // Auth schemas
 export const SignupSchema = z
@@ -31,12 +40,12 @@ export const SignupSchema = z
     email: z.string().email(),
     password: z
       .string()
-      .min(8, { message: "Password must be at least 8 characters" })
-      .regex(/[a-z]/, { message: "Password must contain a lowercase letter" })
-      .regex(/[A-Z]/, { message: "Password must contain an uppercase letter" })
-      .regex(/\d/, { message: "Password must contain a number" })
+      .min(8, { message: "Must be at least 8 characters" })
+      .regex(/[a-z]/, { message: "Must contain a lowercase letter" })
+      .regex(/[A-Z]/, { message: "Must contain an uppercase letter" })
+      .regex(/\d/, { message: "Must contain a number" })
       .regex(/[^a-zA-Z\d\s]/, {
-        message: "Password must contain a special character",
+        message: "Must contain a special character",
       }),
     confirmPassword: z.string(),
   })
@@ -185,18 +194,15 @@ export const SelectDiscSchema = createSelectSchema(discs, {
     .uuid()
     .nullable()
     .transform((val) => val ?? "custom"),
-}).extend({
-  // Account for joining laf from the users table
-  laf: z.string(),
 });
 export const UpdateDiscSchema = createUpdateSchema(discs, DiscExtensions);
 
 // For disc pick-up extension
 export const DaysSchema = z
-  .number({ message: "Days must be a number" })
-  .int({ message: "Days must be a whole number" })
-  .positive({ message: "Days must be greater than zero" })
-  .lte(365, { message: "Days must be less than or equal to 365" });
+  .number({ message: "Must be a number" })
+  .int({ message: "Must be a whole number" })
+  .min(1, { message: "Must be greater than zero" })
+  .max(365, { message: "Cannot be more than 365" });
 
 // Trend schemas
 export const CreateTrendSchema = createInsertSchema(trends);

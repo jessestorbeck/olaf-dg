@@ -15,22 +15,15 @@ import {
 } from "@/db/validation";
 import { dateHasPassed } from "@/app/lib/utils";
 import { ToastState } from "@/app/ui/toast";
-import { fetchUserId, fetchHoldDuration } from "@/data-access/users";
+import { fetchUserId, fetchUserSettings } from "@/data-access/users";
 
 export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
-    // Subquery to select the user lafs
-    const userLafs = db
-      .select({ id: users.id, laf: users.laf })
-      .from(users)
-      .as("userLafs");
+    const userId = await fetchUserId();
     const rows = await db
       .select()
       .from(discs)
-      // Join with laf from the users table
-      .innerJoin(userLafs, eq(discs.userId, userLafs.id))
       .where(
         and(
           eq(discs.userId, userId),
@@ -47,11 +40,7 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
         )
       )
       .orderBy(desc(discs.createdAt));
-    const filteredDiscs = rows.map((row) =>
-      // Have to flatten the returned rows before parsing,
-      // since Drizzle creates nested objects for joined tables
-      SelectDiscSchema.parse({ ...row.discs, laf: row.userLafs.laf })
-    );
+    const filteredDiscs = rows.map((row) => SelectDiscSchema.parse(row));
     return filteredDiscs;
   } catch (error) {
     console.error("Database Error:", error);
@@ -62,7 +51,7 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
 export async function fetchDiscById(id: string): Promise<SelectDisc | void> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Subquery to select the user lafs
     const userLafs = db
       .select({ id: users.id, laf: users.laf })
@@ -92,7 +81,7 @@ export async function fetchDiscById(id: string): Promise<SelectDisc | void> {
 export async function fetchCardData() {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Select just phone numbers, statuses, and heldUntil dates
     // Necessary filtering can be done post-query
     const data = await db
@@ -184,7 +173,7 @@ export async function addDisc(
   let encodedMessage: string;
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Validate form data
     const validatedFields = CreateDiscSchema.safeParse({
       ...Object.fromEntries(formData),
@@ -270,7 +259,7 @@ export async function editDisc(
 
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Validate form data
     const validatedFields = UpdateDiscSchema.safeParse(
       Object.fromEntries(formData)
@@ -328,9 +317,9 @@ export async function sendNotifications(
   const notificationField = mode === "initial" ? "notified" : "reminded";
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
 
-    const holdDuration = await fetchHoldDuration();
+    const { holdDuration } = await fetchUserSettings();
     await db
       .update(discs)
       .set({
@@ -365,7 +354,7 @@ export async function addTimeToDiscs(
 ): Promise<ToastState> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Validate extension days
     const validatedDays = DaysSchema.safeParse(days);
     if (!validatedDays.success) {
@@ -407,7 +396,7 @@ export async function updateDiscStatus(
 ): Promise<ToastState> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     // Validate disc status
     const validatedStatus = UpdateDiscSchema.shape.status.parse(status);
     await db
@@ -437,7 +426,7 @@ export async function updateDiscStatus(
 export async function deleteDiscs(ids: string[]): Promise<ToastState> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     await db
       .delete(discs)
       .where(and(eq(discs.userId, userId), inArray(discs.id, ids)));

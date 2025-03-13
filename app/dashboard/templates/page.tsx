@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { Metadata } from "next";
 
@@ -7,6 +9,7 @@ import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
 import { DataTableWrapper } from "@/app/ui/templates/data-table-wrapper";
 import { fetchFilteredTemplates } from "@/data-access/templates";
+import { fetchUserSettings } from "@/data-access/users";
 
 export const metadata: Metadata = {
   title: "Templates",
@@ -21,6 +24,7 @@ export default async function Page(props: {
   const query = searchParams?.query || "";
 
   const data = await fetchFilteredTemplates(query);
+  const userSettings = await fetchUserSettings();
 
   return (
     <div className="w-full">
@@ -33,7 +37,7 @@ export default async function Page(props: {
       </div>
       <Suspense fallback={<DiscsTableSkeleton />}>
         <div className="container mx-auto py-4">
-          <DataTableWrapper data={data} />
+          <DataTableWrapper data={data} userSettings={userSettings} />
         </div>
       </Suspense>
     </div>

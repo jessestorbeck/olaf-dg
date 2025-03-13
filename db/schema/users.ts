@@ -39,3 +39,9 @@ export const users = pgTable("users", {
 // Export inferred types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
+
+// Special type for user settings
+export type UserSettings = {
+  holdDuration: number;
+  laf: string | null;
+};

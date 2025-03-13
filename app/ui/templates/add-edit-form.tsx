@@ -38,6 +38,7 @@ import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
 import { NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
 import { CreateTemplateSchema, UpdateTemplateSchema } from "@/db/validation";
+import { UserSettings } from "@/db/schema/users";
 
 const formDefaults = {
   name: "",
@@ -48,9 +49,11 @@ const formDefaults = {
 export default function AddEditForm({
   template, // Supply template if editing
   templateNames,
+  userSettings,
 }: {
   template?: SelectTemplate;
   templateNames: string[];
+  userSettings: UserSettings;
 }) {
   // Set up the zod schema according to whether we're adding or editing
   const TemplateSchema = template ? UpdateTemplateSchema : CreateTemplateSchema;
@@ -126,14 +129,13 @@ export default function AddEditForm({
     plastic: "Z",
     brand: "Discraft",
     mold: "Luna",
-    laf: "Haple Mill",
-    heldUntil: new Date(),
+    heldUntil: null,
   };
   const [previewDisc, setPreviewDisc] = useState(initialPreviewDisc);
 
   const content = form.watch("content");
   const splitContent = splitTemplateContent(content);
-  const preview = getTemplatePreview(content, previewDisc);
+  const preview = getTemplatePreview(content, previewDisc, userSettings);
 
   return (
     <Form {...form}>

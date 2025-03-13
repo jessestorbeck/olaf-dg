@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import type { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
+import { UserSettings } from "@/db/schema/users";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -87,16 +88,33 @@ export const splitTemplateContent = (
 
 export const getTemplatePreview = (
   templateContent: string,
-  disc: NotificationPreviewDisc | SelectDisc
+  disc: NotificationPreviewDisc | SelectDisc,
+  userSettings: UserSettings
 ) => {
   const splitTemplate = splitTemplateContent(templateContent);
   const splitPreview = splitTemplate.map(({ substring, className }) => {
     if (templateVarRegex.test(substring)) {
       // For each template variable, replace it with the corresponding disc property
       if (substring === "$heldUntil") {
+        if (disc.heldUntil) {
+          return {
+            substring: disc.heldUntil.toDateString(),
+            className,
+          };
+        } else {
+          // In case the disc doesn't have a heldUntil date yet,
+          const provisional = new Date();
+          provisional.setDate(
+            provisional.getDate() + userSettings.holdDuration
+          );
+          return {
+            substring: provisional.toDateString(),
+            className,
+          };
+        }
+      } else if (substring === "$laf") {
         return {
-          substring:
-            disc.heldUntil?.toDateString() ?? new Date().toDateString(),
+          substring: userSettings.laf,
           className,
         };
       } else if (substring === "$mold" && !disc.mold) {

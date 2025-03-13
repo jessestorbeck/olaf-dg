@@ -7,10 +7,10 @@ import { APIError } from "better-auth/api";
 
 import { auth } from "@/app/lib/auth";
 import { db } from "@/db/index";
-import { users } from "@/db/schema/users";
+import { users, UserSettings } from "@/db/schema/users";
 import { SignupSchema, LoginSchema } from "@/db/validation";
 
-export async function fetchUserId(): Promise<string | void> {
+export async function fetchUserId(): Promise<string> {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -26,16 +26,16 @@ export async function fetchUserId(): Promise<string | void> {
   }
 }
 
-export async function fetchHoldDuration() {
+export async function fetchUserSettings(): Promise<UserSettings> {
   try {
     // Auth check
-    const userId = (await fetchUserId()) ?? "";
+    const userId = await fetchUserId();
     const rows = await db
-      .select({ holdDuration: users.holdDuration })
+      .select({ holdDuration: users.holdDuration, laf: users.laf })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    return rows[0].holdDuration;
+    return rows[0];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch hold duration");

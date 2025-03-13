@@ -36,6 +36,7 @@ import { CreateDiscSchema, UpdateDiscSchema } from "@/db/validation";
 import { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
 import { getTemplatePreview } from "@/app/lib/utils";
+import { UserSettings } from "@/db/schema/users";
 
 const formDefaults = {
   name: "",
@@ -51,9 +52,11 @@ const formDefaults = {
 export default function AddEditForm({
   disc, // Supply disc if editing
   templates,
+  userSettings,
 }: {
   disc?: SelectDisc;
   templates: SelectTemplate[];
+  userSettings: UserSettings;
 }) {
   // Sort templates by type and default
   const notificationTemplates = templates
@@ -92,7 +95,8 @@ export default function AddEditForm({
     const notificationTemplateContent = notificationTemplate?.content ?? "";
     const notificationText = getTemplatePreview(
       notificationTemplateContent,
-      disc
+      disc,
+      userSettings
     )
       .map((templateSpan) => templateSpan.substring)
       .join("");
@@ -133,8 +137,7 @@ export default function AddEditForm({
           brand: "",
           plastic: "",
           mold: "",
-          laf: "",
-          heldUntil: new Date(),
+          heldUntil: null,
         }
       ),
       reminderText: getNotificationText(
@@ -146,8 +149,7 @@ export default function AddEditForm({
           brand: "",
           plastic: "",
           mold: "",
-          laf: "",
-          heldUntil: new Date(),
+          heldUntil: null,
         }
       ),
       extensionText: getNotificationText(
@@ -159,8 +161,7 @@ export default function AddEditForm({
           brand: "",
           plastic: "",
           mold: "",
-          laf: "",
-          heldUntil: new Date(),
+          heldUntil: null,
         }
       ),
       // Override with disc values if editing
@@ -177,8 +178,7 @@ export default function AddEditForm({
     brand: form.watch("brand"),
     plastic: form.watch("plastic"),
     mold: form.watch("mold"),
-    laf: disc?.laf || "Haple Mill",
-    heldUntil: disc?.heldUntil || new Date(),
+    heldUntil: disc?.heldUntil || null,
   };
 
   // onChange handler for fields needed for previews

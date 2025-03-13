@@ -1,9 +1,12 @@
+export const dynamic = "force-dynamic";
+
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 
 import AddEditForm from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { fetchFilteredTemplates } from "@/data-access/templates";
+import { fetchUserSettings } from "@/data-access/users";
 
 export const metadata: Metadata = {
   title: "Edit Disc",
@@ -12,7 +15,7 @@ export const metadata: Metadata = {
 export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id;
-
+  const userSettings = await fetchUserSettings();
   const templates = await fetchFilteredTemplates("");
   const templateNames = templates
     // Since we want to be able to edit a template and save it with the same name,
@@ -37,7 +40,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
           },
         ]}
       />
-      <AddEditForm template={templateToEdit} templateNames={templateNames} />
+      <AddEditForm
+        template={templateToEdit}
+        templateNames={templateNames}
+        userSettings={userSettings}
+      />
     </main>
   );
 }

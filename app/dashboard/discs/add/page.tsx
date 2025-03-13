@@ -1,8 +1,11 @@
+export const dynamic = "force-dynamic";
+
 import AddEditForm from "@/app/ui/discs/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { Metadata } from "next";
 
 import { fetchFilteredTemplates } from "@/data-access/templates";
+import { fetchUserSettings } from "@/data-access/users";
 
 export const metadata: Metadata = {
   title: "Add disc",
@@ -10,6 +13,7 @@ export const metadata: Metadata = {
 
 export default async function Page() {
   const templates = await fetchFilteredTemplates("");
+  const userSettings = await fetchUserSettings();
   return (
     <main>
       <Breadcrumbs
@@ -22,7 +26,7 @@ export default async function Page() {
           },
         ]}
       />
-      <AddEditForm templates={templates} />
+      <AddEditForm templates={templates} userSettings={userSettings} />
     </main>
   );
 }

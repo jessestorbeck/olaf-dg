@@ -58,8 +58,7 @@ export const discs = pgTable("discs", {
 });
 
 export type InsertDisc = typeof discs.$inferInsert;
-// Add laf to SelectDisc
-export type SelectDisc = typeof discs.$inferSelect & { laf: string | null };
+export type SelectDisc = typeof discs.$inferSelect;
 
 // Special type for preview discs
 export type NotificationPreviewDisc = Omit<

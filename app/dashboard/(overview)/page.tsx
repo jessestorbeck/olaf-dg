@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import CardWrapper from "@/app/ui/dashboard/cards";
 // import TrendsChart from "@/app/ui/dashboard/trends-chart";
 // import LatestDiscs from "@/app/ui/dashboard/latest-discs";
