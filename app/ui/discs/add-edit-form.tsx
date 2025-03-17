@@ -35,7 +35,7 @@ import {
 import { CreateDiscSchema, UpdateDiscSchema } from "@/db/validation";
 import { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
-import { getTemplatePreview } from "@/app/lib/utils";
+import { getNotificationText } from "@/app/lib/utils";
 import { UserSettings } from "@/db/schema/users";
 
 const formDefaults = {
@@ -49,7 +49,7 @@ const formDefaults = {
   notes: "",
 };
 
-export default function AddEditForm({
+export function AddEditForm({
   disc, // Supply disc if editing
   templates,
   userSettings,
@@ -82,27 +82,6 @@ export default function AddEditForm({
         a.name.localeCompare(b.name)
     );
 
-  // Convenience function to get notification text
-  // Could be refactored out to lib/utils if needed
-  const getNotificationText = (
-    templateID: string,
-    templates: SelectTemplate[],
-    disc: NotificationPreviewDisc
-  ) => {
-    const notificationTemplate = templates.find(
-      (template) => template.id === templateID
-    );
-    const notificationTemplateContent = notificationTemplate?.content ?? "";
-    const notificationText = getTemplatePreview(
-      notificationTemplateContent,
-      disc,
-      userSettings
-    )
-      .map((templateSpan) => templateSpan.substring)
-      .join("");
-    return notificationText;
-  };
-
   // Set up form state and server action
   const initialAddState: AddDiscState = { formData: {} };
   const initialEditState: EditDiscState = { formData: disc };
@@ -121,51 +100,64 @@ export default function AddEditForm({
     mode: "onTouched",
     defaultValues: {
       ...formDefaults,
+      // Override with disc values if editing
+      ...disc,
       // Template-related defaults get defined here inside the component,
       // since they depend on the templates prop
       // Set default values for notification templates
-      notificationTemplate: notificationTemplates[0].id,
-      reminderTemplate: reminderTemplates[0].id,
-      extensionTemplate: extensionTemplates[0].id,
+      notificationTemplate:
+        disc?.notificationTemplate || notificationTemplates[0].id,
+      reminderTemplate: disc?.reminderTemplate || reminderTemplates[0].id,
+      extensionTemplate: disc?.extensionTemplate || extensionTemplates[0].id,
       // Set default values for notification text fields
-      notificationText: getNotificationText(
-        notificationTemplates[0].id,
-        templates,
-        disc ?? {
-          name: "",
-          color: "",
-          brand: "",
-          plastic: "",
-          mold: "",
-          heldUntil: null,
-        }
-      ),
-      reminderText: getNotificationText(
-        reminderTemplates[0].id,
-        templates,
-        disc ?? {
-          name: "",
-          color: "",
-          brand: "",
-          plastic: "",
-          mold: "",
-          heldUntil: null,
-        }
-      ),
-      extensionText: getNotificationText(
-        extensionTemplates[0].id,
-        templates,
-        disc ?? {
-          name: "",
-          color: "",
-          brand: "",
-          plastic: "",
-          mold: "",
-          heldUntil: null,
-        }
-      ),
-      // Override with disc values if editing
-      ...disc,
+      notificationText:
+        // Use the disc's notification text if it exists
+        disc?.notificationText ||
+        // Otherwise, generate the text from the disc's template
+        // or use the default template if the former is not set
+        getNotificationText(
+          disc?.notificationTemplate || notificationTemplates[0].id,
+          templates,
+          disc || {
+            name: "",
+            color: "",
+            brand: "",
+            plastic: "",
+            mold: "",
+            heldUntil: null,
+          },
+          userSettings
+        ),
+      reminderText:
+        disc?.reminderText ||
+        getNotificationText(
+          disc?.reminderTemplate || reminderTemplates[0].id,
+          templates,
+          disc || {
+            name: "",
+            color: "",
+            brand: "",
+            plastic: "",
+            mold: "",
+            heldUntil: null,
+          },
+          userSettings
+        ),
+      extensionText:
+        disc?.extensionText ||
+        getNotificationText(
+          disc?.extensionTemplate || extensionTemplates[0].id,
+          templates,
+          disc || {
+            name: "",
+            color: "",
+            brand: "",
+            plastic: "",
+            mold: "",
+            heldUntil: null,
+          },
+          userSettings
+        ),
       // Have to set a value here to avoid controlled input error
       addAnother: "false",
     },
@@ -194,19 +186,19 @@ export default function AddEditForm({
         text: "notificationText",
         skip:
           disc?.notified ||
-          ["picked_up", "archived"].includes(disc?.status ?? ""),
+          ["picked_up", "archived"].includes(disc?.status || ""),
       },
       {
         template: "reminderTemplate",
         text: "reminderText",
         skip:
           disc?.reminded ||
-          ["picked_up", "archived"].includes(disc?.status ?? ""),
+          ["picked_up", "archived"].includes(disc?.status || ""),
       },
       {
         template: "extensionTemplate",
         text: "extensionText",
-        skip: ["picked_up", "archived"].includes(disc?.status ?? ""),
+        skip: ["picked_up", "archived"].includes(disc?.status || ""),
       },
     ];
 
@@ -222,7 +214,8 @@ export default function AddEditForm({
         const notificationText = getNotificationText(
           templateID,
           templates,
-          previewDisc
+          previewDisc,
+          userSettings
         );
         form.setValue(field.text, notificationText);
       }
@@ -266,7 +259,7 @@ export default function AddEditForm({
         {/* Owner details */}
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
           <span className="font-semibold">Owner</span>
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="name"
@@ -309,7 +302,7 @@ export default function AddEditForm({
         {/* Disc details */}
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
           <span className="font-semibold">Disc</span>
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <FormField
               control={form.control}
               name="color"
@@ -391,7 +384,7 @@ export default function AddEditForm({
         {/* Notification details */}
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
           <span className="font-semibold">Notifications</span>
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               {/* Select notification template */}
               <FormField
@@ -408,14 +401,15 @@ export default function AddEditForm({
                           const notificationText = getNotificationText(
                             e,
                             templates,
-                            previewDisc
+                            previewDisc,
+                            userSettings
                           );
                           form.setValue("notificationText", notificationText);
                         }
                         field.onChange(e);
                       }}
                       {...field}
-                      value={field.value ?? notificationTemplates[0].id}
+                      value={field.value || notificationTemplates[0].id}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -423,7 +417,7 @@ export default function AddEditForm({
                           disabled={
                             disc?.notified ||
                             ["archived", "picked_up"].includes(
-                              disc?.status ?? ""
+                              disc?.status || ""
                             )
                           }
                           className="bg-background"
@@ -459,17 +453,26 @@ export default function AddEditForm({
                         // since disabling will make the form values undefined
                         readOnly={
                           disc?.notified ||
-                          ["archived", "picked_up"].includes(disc?.status ?? "")
+                          ["archived", "picked_up"].includes(disc?.status || "")
                         }
                         // cursor-not-allowed if readOnly
                         className={clsx("bg-background", {
                           "cursor-not-allowed":
                             disc?.notified ||
                             ["archived", "picked_up"].includes(
-                              disc?.status ?? ""
+                              disc?.status || ""
                             ),
                         })}
                         {...field}
+                        value={
+                          field.value ||
+                          getNotificationText(
+                            form.getValues("notificationTemplate") || "",
+                            templates,
+                            previewDisc,
+                            userSettings
+                          )
+                        }
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("notificationTemplate", "custom");
@@ -496,7 +499,8 @@ export default function AddEditForm({
                           const reminderText = getNotificationText(
                             e,
                             templates,
-                            previewDisc
+                            previewDisc,
+                            userSettings
                           );
                           form.setValue("reminderText", reminderText);
                         }
@@ -511,7 +515,7 @@ export default function AddEditForm({
                           disabled={
                             disc?.reminded ||
                             ["archived", "picked_up"].includes(
-                              disc?.status ?? ""
+                              disc?.status || ""
                             )
                           }
                           className="bg-background"
@@ -545,17 +549,26 @@ export default function AddEditForm({
                         // readOnly if disc is already reminded or status is archived or picked up
                         readOnly={
                           disc?.reminded ||
-                          ["archived", "picked_up"].includes(disc?.status ?? "")
+                          ["archived", "picked_up"].includes(disc?.status || "")
                         }
                         // cursor-not-allowed if readOnly
                         className={clsx("bg-background", {
                           "cursor-not-allowed":
                             disc?.reminded ||
                             ["archived", "picked_up"].includes(
-                              disc?.status ?? ""
+                              disc?.status || ""
                             ),
                         })}
                         {...field}
+                        value={
+                          field.value ||
+                          getNotificationText(
+                            form.getValues("reminderTemplate") || "",
+                            templates,
+                            previewDisc,
+                            userSettings
+                          )
+                        }
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("reminderTemplate", "custom");
@@ -582,7 +595,8 @@ export default function AddEditForm({
                           const extensionText = getNotificationText(
                             e,
                             templates,
-                            previewDisc
+                            previewDisc,
+                            userSettings
                           );
                           form.setValue("extensionText", extensionText);
                         }
@@ -595,7 +609,7 @@ export default function AddEditForm({
                         <SelectTrigger
                           // Disable if disc status is archived or picked up
                           disabled={["archived", "picked_up"].includes(
-                            disc?.status ?? ""
+                            disc?.status || ""
                           )}
                           className="bg-background"
                         >
@@ -627,16 +641,25 @@ export default function AddEditForm({
                         rows={4}
                         // readOnly if disc status is archived or picked up
                         readOnly={["archived", "picked_up"].includes(
-                          disc?.status ?? ""
+                          disc?.status || ""
                         )}
                         // cursor-not-allowed if readOnly
                         className={clsx("bg-background", {
                           "cursor-not-allowed": [
                             "archived",
                             "picked_up",
-                          ].includes(disc?.status ?? ""),
+                          ].includes(disc?.status || ""),
                         })}
                         {...field}
+                        value={
+                          field.value ||
+                          getNotificationText(
+                            form.getValues("extensionTemplate") || "",
+                            templates,
+                            previewDisc,
+                            userSettings
+                          )
+                        }
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("extensionTemplate", "custom");
@@ -654,7 +677,7 @@ export default function AddEditForm({
         {/* Internal lost-and-found details */}
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
           <span className="font-semibold">Internal</span>
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="location"

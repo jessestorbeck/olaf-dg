@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 import type { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
+import { SelectTemplate } from "@/db/schema/templates";
 import { UserSettings } from "@/db/schema/users";
 
 export function cn(...inputs: ClassValue[]) {
@@ -103,12 +104,12 @@ export const getTemplatePreview = (
           };
         } else {
           // In case the disc doesn't have a heldUntil date yet,
-          const provisional = new Date();
-          provisional.setDate(
-            provisional.getDate() + userSettings.holdDuration
+          const provisionalDate = new Date();
+          provisionalDate.setDate(
+            provisionalDate.getDate() + userSettings.holdDuration
           );
           return {
-            substring: provisional.toDateString(),
+            substring: provisionalDate.toDateString(),
             className,
           };
         }
@@ -145,8 +146,10 @@ export const getTemplatePreview = (
       templateVarRegex.test(substring) &&
       !disc[substring.slice(1) as keyof NotificationPreviewDisc] &&
       // Don't include $mold or $heldUntil here,
-      // since they are auto-filled if undefined
-      !["$mold", "$heldUntil"].includes(substring)
+      // since they are auto-filled if undefined;
+      // Also don't include $laf since it is a user setting
+      // and not a disc property
+      !["$mold", "$heldUntil", "$laf"].includes(substring)
     ) {
       const newSubstring = splitPreview[index - 1].substring?.slice(0, -1);
       splitPreview[index - 1].substring = newSubstring;
@@ -154,4 +157,31 @@ export const getTemplatePreview = (
   });
   // Finally, remove any empty substrings
   return splitPreview.filter(({ substring }) => substring !== "");
+};
+
+// Convenience function to get notification text
+// given the template ID and an array of templates
+export const getNotificationText = (
+  templateID: string,
+  templates: SelectTemplate[],
+  disc: NotificationPreviewDisc,
+  userSettings: UserSettings
+): string => {
+  const notificationTemplate = templates.find(
+    (template) => template.id === templateID
+  );
+  if (!notificationTemplate) {
+    throw new Error(
+      `Template with ID ${templateID} not found in templates array`
+    );
+  } else {
+    const notificationText = getTemplatePreview(
+      notificationTemplate.content,
+      disc,
+      userSettings
+    )
+      .map((templateSpan) => templateSpan.substring)
+      .join("");
+    return notificationText;
+  }
 };

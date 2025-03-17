@@ -35,15 +35,15 @@ export const discs = pgTable("discs", {
     () => templates.id,
     { onDelete: "set null" }
   ),
-  notificationText: text("notification_text").notNull(),
+  notificationText: text("notification_text"),
   reminderTemplate: uuid("reminder_template").references(() => templates.id, {
     onDelete: "set null",
   }),
-  reminderText: text("reminder_text").notNull(),
+  reminderText: text("reminder_text"),
   extensionTemplate: uuid("extension_template").references(() => templates.id, {
     onDelete: "set null",
   }),
-  extensionText: text("extension_text").notNull(),
+  extensionText: text("extension_text"),
   notified: boolean().notNull().default(false),
   reminded: boolean().notNull().default(false),
   status: discStatusEnum().notNull().default("awaiting pickup"),

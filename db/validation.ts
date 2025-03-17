@@ -25,18 +25,27 @@ export const SelectUserSchema = createSelectSchema(users);
 export const UpdateUserSchema = createUpdateSchema(users);
 
 export const UserSettingsSchema = z.object({
-  holdDuration: z
+  name: z
+    .string()
+    .trim()
+    .min(1, { message: "Account name is required" })
+    .max(maxLenField, tooLong(maxLenField)),
+  holdDuration: z.coerce
     .number()
     .int({ message: "Must be a whole number" })
     .min(30, { message: "Must be at least 30 days" })
     .max(365, { message: "Cannot be more than 365 days" }),
-  laf: z.string().max(maxLenField, tooLong(maxLenField)),
+  laf: z
+    .string()
+    .trim()
+    .min(1, { message: "Lost-and-found name is required" })
+    .max(maxLenField, tooLong(maxLenField)),
 });
 
 // Auth schemas
 export const SignupSchema = z
   .object({
-    name: z.string().min(1, { message: "Name is required" }),
+    name: z.string().trim().min(1, { message: "Name is required" }),
     email: z.string().email(),
     password: z
       .string()
@@ -122,7 +131,7 @@ export const CreateDiscSchema = createInsertSchema(discs, {
       z
         .string()
         .regex(/^custom$/)
-        .transform(() => undefined)
+        .transform(() => null)
     ),
   notificationText: (schema) =>
     schema
@@ -134,7 +143,7 @@ export const CreateDiscSchema = createInsertSchema(discs, {
       z
         .string()
         .regex(/^custom$/)
-        .transform(() => undefined)
+        .transform(() => null)
     ),
   reminderText: (schema) =>
     schema
@@ -146,7 +155,7 @@ export const CreateDiscSchema = createInsertSchema(discs, {
       z
         .string()
         .regex(/^custom$/)
-        .transform(() => undefined)
+        .transform(() => null)
     ),
   extensionText: (schema) =>
     schema

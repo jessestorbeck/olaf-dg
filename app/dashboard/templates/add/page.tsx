@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import AddEditForm from "@/app/ui/templates/add-edit-form";
+import { AddEditForm } from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
 import { Metadata } from "next";
 

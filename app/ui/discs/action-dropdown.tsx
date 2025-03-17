@@ -320,7 +320,8 @@ export function ActionDropdown({
                   <Input
                     type="number"
                     className="w-14"
-                    min="1"
+                    min={1}
+                    max={365}
                     required
                     value={days || ""}
                     onChange={(e) => setDays(parseInt(e.target.value))}

@@ -26,7 +26,7 @@ import { Input } from "@/app/ui/input";
 import { Textarea } from "@/app/ui/textarea";
 import { Button } from "@/app/ui/button";
 import { Label } from "@/app/ui/label";
-import { PreviewDiscPopover } from "./preview-disc-popover";
+import { PreviewDiscPopover } from "@/app/ui/templates/preview-disc-popover";
 import { useToast } from "@/app/hooks/use-toast";
 import {
   addTemplate,
@@ -46,7 +46,7 @@ const formDefaults = {
   content: "",
 };
 
-export default function AddEditForm({
+export function AddEditForm({
   template, // Supply template if editing
   templateNames,
   userSettings,
@@ -141,7 +141,7 @@ export default function AddEditForm({
     <Form {...form}>
       <form action={formAction}>
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField
               control={form.control}
               name="name"

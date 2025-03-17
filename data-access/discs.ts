@@ -13,9 +13,10 @@ import {
   UpdateDiscSchema,
   DaysSchema,
 } from "@/db/validation";
-import { dateHasPassed } from "@/app/lib/utils";
+import { dateHasPassed, getNotificationText } from "@/app/lib/utils";
 import { ToastState } from "@/app/ui/toast";
 import { fetchUserId, fetchUserSettings } from "@/data-access/users";
+import { fetchFilteredTemplates } from "@/data-access/templates";
 
 export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
   try {
@@ -197,6 +198,18 @@ export async function addDisc(
     // It's only used after the insert to redirect or not
     const { addAnother, ...dataToInsert } = validatedFields.data;
 
+    // Don't write notification text to the db unless it's a custom template
+    // When using templates, notifications are generated from templates as needed
+    // so that notifications are always up to date with changes to templates and user settings
+    // I tried to integrate this logic into the Zod schema,
+    // but this method seemed more straightforward
+    dataToInsert.notificationText =
+      dataToInsert.notificationTemplate ? null : dataToInsert.notificationText;
+    dataToInsert.reminderText =
+      dataToInsert.reminderTemplate ? null : dataToInsert.reminderText;
+    dataToInsert.extensionText =
+      dataToInsert.extensionTemplate ? null : dataToInsert.extensionText;
+
     // Insert data into the database
     await db.insert(discs).values({ ...dataToInsert, userId });
 
@@ -279,7 +292,33 @@ export async function editDisc(
 
     await db
       .update(discs)
-      .set(validatedFields.data)
+      .set({
+        ...validatedFields.data,
+        // Logic below is a bit convoluted because of the need
+        // to use JS logic for the incoming form data and SQL logic for existing db values
+        // The overall goals though are:
+        // (a) for initial and reminder notifications, don't update the text if the notification has already been sent
+        // (b) if a template is being used, set the text to null
+        // (c) if a template is NOT being used, set the text to the incoming form data
+        notificationText: sql<string>`
+          CASE
+            WHEN ${discs.notified} = FALSE
+              -- If using a template, set the text to null; if custom, set to the incoming form data 
+              THEN ${validatedFields.data.notificationTemplate ? null : validatedFields.data.notificationText}
+            -- If the notification has already been sent, keep the existing text
+            ELSE ${discs.notificationText}
+          END`,
+        reminderText: sql<string>`
+          CASE
+            WHEN ${discs.reminded} = FALSE
+              THEN ${validatedFields.data.reminderTemplate ? null : validatedFields.data.reminderText}
+            ELSE ${discs.reminderText}
+          END`,
+        extensionText:
+          validatedFields.data.extensionTemplate ?
+            null
+          : validatedFields.data.extensionText,
+      })
       .where(and(eq(discs.id, id), eq(discs.userId, userId)));
 
     // Prepare toast
@@ -314,22 +353,65 @@ export async function sendNotifications(
   ids: string[],
   mode: "initial" | "reminder"
 ): Promise<ToastState> {
-  const notificationField = mode === "initial" ? "notified" : "reminded";
   try {
     // Auth check
     const userId = await fetchUserId();
 
-    const { holdDuration } = await fetchUserSettings();
-    await db
+    const booleanField = mode === "initial" ? "notified" : "reminded";
+    const templateField =
+      mode === "initial" ? "notificationTemplate" : "reminderTemplate";
+    const textField = mode === "initial" ? "notificationText" : "reminderText";
+
+    const [userSettings, templates] = await Promise.all([
+      fetchUserSettings(),
+      fetchFilteredTemplates(""),
+    ]);
+
+    // Initial db update, in which we set notified/reminded to true
+    // and set the heldUntil date for initial notifications
+    const updatedDiscs: SelectDisc[] = await db
       .update(discs)
       .set({
-        [notificationField]: true,
+        [booleanField]: true,
         heldUntil:
           mode === "initial" ?
-            sql<Date>`NOW() + (INTERVAL '1 day' * ${holdDuration})`
+            sql<Date>`NOW() + (INTERVAL '1 day' * ${userSettings.holdDuration})`
           : discs.heldUntil,
       })
-      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)));
+      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)))
+      .returning();
+
+    // Build the CASE WHEN statement for setting each discs's notification text
+    const textValue = sql`CASE`;
+    updatedDiscs.forEach((disc) => {
+      // If the disc specifies a template, use it to generate the notification text
+      // Otherwise, use the custom text will already be present
+      const notificationText =
+        disc[templateField] ?
+          getNotificationText(
+            disc[templateField],
+            templates,
+            disc,
+            userSettings
+          )
+        : disc[textField];
+      textValue.append(
+        sql` WHEN ${discs.id} = ${disc.id} THEN ${notificationText}`
+      );
+    });
+    textValue.append(sql` END`);
+
+    // Second db update, in which we set the notification text
+    const toNotify = await db
+      .update(discs)
+      .set({ [textField]: textValue })
+      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)))
+      .returning({ phone: discs.phone, [textField]: discs[textField] });
+
+    // Send notifications
+    // STILL NEED TO IMPLEMENT THIS
+    console.log("toNotify", toNotify);
+
     revalidatePath("/dashboard/discs");
     return {
       toast: {

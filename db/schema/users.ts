@@ -42,6 +42,7 @@ export type SelectUser = typeof users.$inferSelect;
 
 // Special type for user settings
 export type UserSettings = {
+  name: string;
   holdDuration: number;
   laf: string | null;
 };

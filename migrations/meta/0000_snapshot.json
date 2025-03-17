@@ -1,5 +1,5 @@
 {
-  "id": "feadceea-63d9-4a90-85cc-0e558e33fee3",
+  "id": "a0049c81-8bf5-4d26-9d65-2eac3122e84b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -316,7 +316,7 @@
           "name": "notification_text",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "reminder_template": {
           "name": "reminder_template",
@@ -328,7 +328,7 @@
           "name": "reminder_text",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "extension_template": {
           "name": "extension_template",
@@ -340,7 +340,7 @@
           "name": "extension_text",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "notified": {
           "name": "notified",
