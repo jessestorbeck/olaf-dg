@@ -13,7 +13,7 @@ export const users = pgTable("users", {
   email: text().notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text(),
-  laf: varchar({ length: 256 }),
+  laf: varchar({ length: 256 }).notNull().default("temp"), // Immediately overwritten as part of sign-up
   holdDuration: integer("hold_duration").notNull().default(60),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

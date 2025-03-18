@@ -91,7 +91,7 @@ CREATE TABLE "users" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
-	"laf" varchar(256),
+	"laf" varchar(256) DEFAULT 'temp' NOT NULL,
 	"hold_duration" integer DEFAULT 60 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,

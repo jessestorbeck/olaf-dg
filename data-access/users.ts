@@ -10,6 +10,7 @@ import { auth } from "@/app/lib/auth";
 import { db } from "@/db/index";
 import { users, UserSettings } from "@/db/schema/users";
 import { SignupSchema, LoginSchema, UserSettingsSchema } from "@/db/validation";
+import { addDefaultTemplates } from "./templates";
 
 export async function fetchUserId(): Promise<string> {
   try {
@@ -92,55 +93,6 @@ export async function updateUserSettings(
       .update(users)
       .set(validatedFields.data)
       .where(eq(users.id, userId));
-
-    // await db.transaction(async (tx) => {
-    //   // Update the user settings
-    //   await tx
-    //     .update(users)
-    //     .set(validatedFields.data)
-    //     .where(eq(users.id, userId));
-    //   // Update notifications in the discs table
-    //   // First, subquery to get template content
-    //   // Templates table needs to be aliased to be able to select the right template content
-    //   const notifciations = aliasedTable(templates, "notifications");
-    //   const reminders = aliasedTable(templates, "reminders");
-    //   const extensions = aliasedTable(templates, "extensions");
-    //   const subquery = tx.$with("subquery").as(
-    //     tx
-    //       .select({
-    //         id: discs.id,
-    //         notificationContent: notifciations.content,
-    //         reminderContent: reminders.content,
-    //         extensionContent: extensions.content,
-    //       })
-    //       .from(discs)
-    //       .leftJoin(
-    //         notifciations,
-    //         eq(discs.notificationTemplate, notifciations.id)
-    //       )
-    //       .leftJoin(reminders, eq(discs.reminderTemplate, reminders.id))
-    //       .leftJoin(extensions, eq(discs.extensionTemplate, extensions.id))
-    //       .where(eq(discs.userId, userId))
-    //   );
-    //   const test = await tx
-    //     .with(subquery)
-    //     .update(discs)
-    //     .set({
-    //       // Only update the initial notification text if notifciation hasn't been sent
-    //       notificationText: sql<string>`
-    //         CASE
-    //           WHEN ${discs.notified} = FALSE AND ${discs.notificationTemplate} IS NOT NULL
-    //             THEN ${subquery.notificationContent}
-    //           ELSE ${discs.notificationText}
-    //         END`,
-    //       // reminderText: sql<string>``,
-    //       // extensionText: sql<string>``,
-    //     })
-    //     .from(subquery)
-    //     .where(and(eq(subquery.id, discs.id), eq(discs.userId, userId)))
-    //     .returning();
-    //   console.log("Update user settings:", test);
-    // });
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to update user settings");
@@ -190,13 +142,27 @@ export async function signUp(
   }
 
   try {
-    await auth.api.signUpEmail({
+    // Create the user
+    const { user } = await auth.api.signUpEmail({
       body: {
         name: validatedFields.data.name,
         email: validatedFields.data.email,
         password: validatedFields.data.password,
       },
     });
+    try {
+      // Add the user's laf name (seems like this can't be done directly through auth.api.signUpEmail)
+      await db
+        .update(users)
+        .set({ laf: validatedFields.data.laf })
+        .where(eq(users.id, user.id));
+      // Add default templates to the user's account
+      await addDefaultTemplates(user.id);
+    } catch (error) {
+      // If there's an error adding the user's laf name or default templates, delete the user
+      await db.delete(users).where(eq(users.id, user.id));
+      throw error;
+    }
   } catch (error) {
     console.error("Error during sign-up:", error);
     const message: string =

@@ -29,6 +29,7 @@ export function SignupForm() {
     mode: "onTouched",
     defaultValues: {
       name: "",
+      laf: "",
       email: "",
       password: "",
       confirmPassword: "",
@@ -72,6 +73,27 @@ export function SignupForm() {
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="laf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lost-and-found name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter the name of your lost-and-found/course/league"
+                      className="bg-background"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    This name will be used with Olaf&apos;s notification
+                    templates to let players know where to pick up their discs.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

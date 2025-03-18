@@ -46,6 +46,11 @@ export const UserSettingsSchema = z.object({
 export const SignupSchema = z
   .object({
     name: z.string().trim().min(1, { message: "Name is required" }),
+    laf: z
+      .string()
+      .trim()
+      .min(1, { message: "Lost-and-found name is required" })
+      .max(maxLenField, tooLong(maxLenField)),
     email: z.string().email(),
     password: z
       .string()

@@ -11,6 +11,7 @@ import {
   SelectTemplateSchema,
   UpdateTemplateSchema,
 } from "@/db/validation";
+import { defaultTemplates } from "@/db/default-templates";
 import { ToastState } from "@/app/ui/toast";
 import { fetchUserId } from "@/data-access/users";
 
@@ -176,6 +177,25 @@ export async function addTemplate(
   redirect(
     `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
+}
+
+export async function addDefaultTemplates(userId: string): Promise<void> {
+  try {
+    // No auth check on this one since it happens as part of sign-up
+    // and userId comes right from auth.api.signUpEmail
+    const templatesToInsert = defaultTemplates.map((template) =>
+      CreateTemplateSchema.omit({ addAnother: true }).parse({
+        ...template,
+        userId,
+      })
+    );
+
+    // Insert the default templates into the database
+    await db.insert(templates).values(templatesToInsert);
+  } catch (error) {
+    console.error("Database error: failed to add default templates", error);
+    throw new Error("Failed to add default templates");
+  }
 }
 
 // Edit state is the same minus formData.addAnother and errors.addAnother
