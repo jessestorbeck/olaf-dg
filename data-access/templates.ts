@@ -327,9 +327,14 @@ export async function deleteTemplates(ids: string[]): Promise<ToastState> {
     // Auth check
     const userId = await fetchUserId();
     // Delete the templates with the given ids
-    await db
-      .delete(templates)
-      .where(and(eq(templates.userId, userId), inArray(templates.id, ids)));
+    await db.delete(templates).where(
+      and(
+        eq(templates.userId, userId),
+        inArray(templates.id, ids),
+        // Make sure default templates can't be deleted
+        ne(templates.isDefault, true)
+      )
+    );
     revalidatePath("/dashboard/templates");
     return {
       toast: {

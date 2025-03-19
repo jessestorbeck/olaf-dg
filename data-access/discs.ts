@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sql, eq, ilike, inArray, and, or, desc } from "drizzle-orm";
+import { sql, eq, ilike, inArray, and, or, desc, SQL } from "drizzle-orm";
 
 import { db } from "@/db/index";
 import { discs, SelectDisc } from "@/db/schema/discs";
@@ -22,23 +22,100 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
   try {
     // Auth check
     const userId = await fetchUserId();
+    // Parse the query for searches on specific fields
+    interface SearchFields {
+      disc: { [key in keyof SelectDisc]?: string };
+      general: string[];
+    }
+    const searchFields: SearchFields = {
+      disc: {
+        name: undefined,
+        phone: undefined,
+        color: undefined,
+        brand: undefined,
+        plastic: undefined,
+        mold: undefined,
+        location: undefined,
+        notes: undefined,
+        notificationTemplate: undefined,
+        notificationText: undefined,
+        reminderTemplate: undefined,
+        reminderText: undefined,
+        extensionTemplate: undefined,
+        extensionText: undefined,
+        notified: undefined,
+        reminded: undefined,
+        status: undefined,
+      },
+      general: [],
+    };
+    const discFields = Object.keys(searchFields.disc);
+    const discFieldRegex = new RegExp(`^(${discFields.join("|")}):`);
+    query
+      .trim()
+      .split(" ")
+      .forEach((term) => {
+        if (discFieldRegex.test(term)) {
+          const [field, value] = term.split(":");
+          searchFields.disc[field as keyof SearchFields["disc"]] = value;
+        } else {
+          searchFields.general.push(term);
+        }
+      });
+
+    // Build the SQL conditions necessary for search
+    // First, for searching for field-specific values
+    const fieldConditions: SQL[] = [];
+    Object.entries(searchFields.disc).forEach(([field, value]) => {
+      if (value) {
+        if (field === "notified" || field === "reminded") {
+          fieldConditions.push(eq(discs[field], value === "true"));
+        } else if (
+          field === "status" &&
+          ["awaiting pickup", "picked up", "archived"].includes(value)
+        ) {
+          fieldConditions.push(
+            eq(
+              discs[field],
+              value as "awaiting pickup" | "picked up" | "archived"
+            )
+          );
+        } else if (field.endsWith("Template")) {
+          fieldConditions.push(eq(discs[field as keyof SelectDisc], value));
+        } else {
+          fieldConditions.push(
+            ilike(discs[field as keyof SelectDisc], `%${value}%`)
+          );
+        }
+      }
+    });
+    // Then, for searching for general values across text fields
+    const generalConditions: SQL[] = [];
+    const textFields = [
+      "name",
+      "phone",
+      "color",
+      "brand",
+      "plastic",
+      "mold",
+      "location",
+      "notes",
+      "notificationText",
+      "reminderText",
+      "extensionText",
+    ];
+    searchFields.general.forEach((term) => {
+      const conditionsByField: SQL[] = textFields.map((field) =>
+        ilike(discs[field as keyof SelectDisc], `%${term}%`)
+      );
+      generalConditions.push(or(...conditionsByField) || sql`TRUE`);
+    });
+
     const rows = await db
       .select()
       .from(discs)
       .where(
-        and(
-          eq(discs.userId, userId),
-          or(
-            ilike(discs.name, `%${query}%`),
-            ilike(discs.phone, `%${query}%`),
-            ilike(discs.color, `%${query}%`),
-            ilike(discs.brand, `%${query}%`),
-            ilike(discs.plastic, `%${query}%`),
-            ilike(discs.mold, `%${query}%`),
-            ilike(discs.location, `%${query}%`),
-            ilike(discs.notes, `%${query}%`)
-          )
-        )
+        and(eq(discs.userId, userId), ...fieldConditions, ...generalConditions)
       )
       .orderBy(desc(discs.createdAt));
     const filteredDiscs = rows.map((row) => SelectDiscSchema.parse(row));

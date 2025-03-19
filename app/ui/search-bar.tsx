@@ -4,6 +4,8 @@ import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 
 import { Search } from "@/app/ui/icons";
+import { Input } from "@/app/ui/input";
+import { Label } from "@/app/ui/label";
 
 export function SearchBar({ placeholder }: { placeholder: string }) {
   const searchParams = useSearchParams();
@@ -22,12 +24,13 @@ export function SearchBar({ placeholder }: { placeholder: string }) {
 
   return (
     <div className="relative flex flex-1 flex-shrink-0">
-      <label htmlFor="search" className="sr-only">
+      <Label htmlFor="search" className="sr-only">
         Search
-      </label>
-      <input
+      </Label>
+      <Input
         id="search"
-        className="peer block w-full rounded-md border border-gray-200 py-[9px] pl-10 text-sm outline-2 placeholder:text-gray-500"
+        type="search"
+        className="w-full rounded-lg border border-gray-200 py-[9px] pl-10 text-sm outline-2"
         placeholder={placeholder}
         onChange={(e) => {
           handleSearch(e.target.value);

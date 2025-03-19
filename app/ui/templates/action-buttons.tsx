@@ -1,6 +1,13 @@
 import Link from "next/link";
 
-import { Edit, Add, Delete, DefaultTemplate, View } from "@/app/ui/icons";
+import {
+  Edit,
+  Add,
+  Delete,
+  DefaultTemplate,
+  View,
+  Discs,
+} from "@/app/ui/icons";
 
 import { Button } from "@/app/ui/button";
 
@@ -21,6 +28,24 @@ export function MakeTemplateDefault() {
       <DefaultTemplate className="w-5 mr-2" aria-hidden="true" />
       Make default
     </div>
+  );
+}
+
+export function GoToDiscs({
+  id,
+  templateType,
+}: {
+  id: string;
+  templateType: string;
+}) {
+  return (
+    <Link
+      href={`/dashboard/discs?query=${templateType}Template%3A${id}`}
+      className="flex items-center"
+    >
+      <Discs className="w-5 mr-2" aria-hidden="true" />
+      Go to discs
+    </Link>
   );
 }
 

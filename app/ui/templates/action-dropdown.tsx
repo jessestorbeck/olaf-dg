@@ -25,6 +25,7 @@ import {
   ViewTemplate,
   EditTemplate,
   DeleteTemplates,
+  GoToDiscs,
 } from "./action-buttons";
 import { AlertTable } from "./alert-table";
 import { useToast } from "@/app/hooks/use-toast";
@@ -114,6 +115,12 @@ export function ActionDropdown({
                 disabled={templates[0].isDefault}
               >
                 <MakeTemplateDefault />
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <GoToDiscs
+                  id={templates[0].id}
+                  templateType={templates[0].type}
+                />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>

@@ -24,7 +24,7 @@ export function AlertTable({ templates }: { templates: SelectTemplate[] }) {
           {templates.map((template) => (
             <TableRow key={template.id}>
               <TableCell>{template.name}</TableCell>
-              <TableCell>{template.type}</TableCell>
+              <TableCell className="capitalize">{template.type}</TableCell>
               <TableCell>
                 {splitTemplateContent(template.content).map(
                   ({ substring, className }, index) => {
