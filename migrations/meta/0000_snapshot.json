@@ -1,5 +1,5 @@
 {
-  "id": "a82909fd-d7d2-475c-839f-4642c206504c",
+  "id": "1cf09fd0-4b07-48cf-8bf7-4681eee06101",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -306,14 +306,14 @@
           "primaryKey": false,
           "notNull": false
         },
-        "notification_template": {
-          "name": "notification_template",
+        "initial_template": {
+          "name": "initial_template",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "notification_text": {
-          "name": "notification_text",
+        "initial_text": {
+          "name": "initial_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -362,7 +362,7 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'awaiting pickup'"
+          "default": "'awaiting_pickup'"
         },
         "held_until": {
           "name": "held_until",
@@ -400,12 +400,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "discs_notification_template_templates_id_fk": {
-          "name": "discs_notification_template_templates_id_fk",
+        "discs_initial_template_templates_id_fk": {
+          "name": "discs_initial_template_templates_id_fk",
           "tableFrom": "discs",
           "tableTo": "templates",
           "columnsFrom": [
-            "notification_template"
+            "initial_template"
           ],
           "columnsTo": [
             "id"
@@ -691,8 +691,8 @@
       "name": "status",
       "schema": "public",
       "values": [
-        "awaiting pickup",
-        "picked up",
+        "awaiting_pickup",
+        "picked_up",
         "archived"
       ]
     },
@@ -700,7 +700,7 @@
       "name": "type",
       "schema": "public",
       "values": [
-        "notification",
+        "initial",
         "reminder",
         "extension"
       ]

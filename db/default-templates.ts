@@ -3,7 +3,7 @@ import { InsertTemplate } from "@/db/schema/templates";
 export const defaultTemplates: Omit<InsertTemplate, "userId">[] = [
   {
     name: "Basic initial",
-    type: "notification",
+    type: "initial",
     content: `Hi $name, your $color $brand $plastic $mold has been found at $laf. It will be held until $heldUntil.`,
     isDefault: true,
   },

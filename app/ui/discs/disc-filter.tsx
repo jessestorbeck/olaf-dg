@@ -38,13 +38,13 @@ export function DiscFilter<TData>({ table }: DiscFilterProps<TData>) {
             All discs
           </span>
         </SelectItem>
-        <SelectItem value="awaiting pickup">
+        <SelectItem value="awaiting_pickup">
           <span className="flex items-center">
             <AwaitingPickup className="w-5 mr-2" aria-hidden="true" />
             Awaiting pickup
           </span>
         </SelectItem>
-        <SelectItem value="picked up">
+        <SelectItem value="picked_up">
           <span className="flex items-center">
             <PickedUp className="w-5 mr-2" aria-hidden="true" />
             Picked up

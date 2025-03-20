@@ -108,7 +108,7 @@ export const columns: ColumnDef<SelectDisc>[] = [
     cell: ({ row }) => {
       const status: string = row.getValue("status");
       if (
-        status === "awaiting pickup" &&
+        status === "awaiting_pickup" &&
         dateHasPassed(row.getValue("heldUntil"))
       ) {
         return "Abandoned";
@@ -120,7 +120,7 @@ export const columns: ColumnDef<SelectDisc>[] = [
       const status = row.getValue(columnId);
       const transformedStatus =
         (
-          status === "awaiting pickup" &&
+          status === "awaiting_pickup" &&
           dateHasPassed(row.getValue("heldUntil"))
         ) ?
           "abandoned"
@@ -181,22 +181,22 @@ export const columns: ColumnDef<SelectDisc>[] = [
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger className="cursor-default">
-                {disc.status === "awaiting pickup" &&
+                {disc.status === "awaiting_pickup" &&
                   !dateHasPassed(disc.heldUntil) && (
                     <AwaitingPickup className="w-5" />
                   )}
-                {disc.status === "picked up" && <PickedUp className="w-5" />}
-                {disc.status === "awaiting pickup" &&
+                {disc.status === "picked_up" && <PickedUp className="w-5" />}
+                {disc.status === "awaiting_pickup" &&
                   dateHasPassed(disc.heldUntil) && (
                     <Abandoned className="w-5" />
                   )}
                 {disc.status === "archived" && <Archive className="w-5" />}
               </TooltipTrigger>
               <TooltipContent>
-                {disc.status === "awaiting pickup" &&
+                {disc.status === "awaiting_pickup" &&
                   !dateHasPassed(disc.heldUntil) && <p>Awaiting pickup</p>}
-                {disc.status === "picked up" && <p>Picked up</p>}
-                {disc.status === "awaiting pickup" &&
+                {disc.status === "picked_up" && <p>Picked up</p>}
+                {disc.status === "awaiting_pickup" &&
                   dateHasPassed(disc.heldUntil) && <p>Abandoned</p>}
                 {disc.status === "archived" && <p>Archived</p>}
               </TooltipContent>

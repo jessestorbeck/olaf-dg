@@ -1,5 +1,5 @@
-CREATE TYPE "public"."status" AS ENUM('awaiting pickup', 'picked up', 'archived');--> statement-breakpoint
-CREATE TYPE "public"."type" AS ENUM('notification', 'reminder', 'extension');--> statement-breakpoint
+CREATE TYPE "public"."status" AS ENUM('awaiting_pickup', 'picked_up', 'archived');--> statement-breakpoint
+CREATE TYPE "public"."type" AS ENUM('initial', 'reminder', 'extension');--> statement-breakpoint
 CREATE TYPE "public"."month" AS ENUM('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');--> statement-breakpoint
 CREATE TABLE "account" (
 	"id" text PRIMARY KEY NOT NULL,
@@ -49,15 +49,15 @@ CREATE TABLE "discs" (
 	"mold" varchar(256),
 	"location" varchar(256),
 	"notes" text,
-	"notification_template" uuid,
-	"notification_text" text,
+	"initial_template" uuid,
+	"initial_text" text,
 	"reminder_template" uuid,
 	"reminder_text" text,
 	"extension_template" uuid,
 	"extension_text" text,
 	"notified" boolean DEFAULT false NOT NULL,
 	"reminded" boolean DEFAULT false NOT NULL,
-	"status" "status" DEFAULT 'awaiting pickup' NOT NULL,
+	"status" "status" DEFAULT 'awaiting_pickup' NOT NULL,
 	"held_until" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -101,7 +101,7 @@ CREATE TABLE "users" (
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "discs" ADD CONSTRAINT "discs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "discs" ADD CONSTRAINT "discs_notification_template_templates_id_fk" FOREIGN KEY ("notification_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "discs" ADD CONSTRAINT "discs_initial_template_templates_id_fk" FOREIGN KEY ("initial_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "discs" ADD CONSTRAINT "discs_reminder_template_templates_id_fk" FOREIGN KEY ("reminder_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "discs" ADD CONSTRAINT "discs_extension_template_templates_id_fk" FOREIGN KEY ("extension_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "templates" ADD CONSTRAINT "templates_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

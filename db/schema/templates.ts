@@ -12,7 +12,7 @@ import { users } from "./users";
 // Note that this type must be exported (along with the table itself)
 // in order for migration generation to work
 export const templateTypeEnum = pgEnum("type", [
-  "notification",
+  "initial",
   "reminder",
   "extension",
 ]);

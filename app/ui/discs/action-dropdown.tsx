@@ -57,28 +57,28 @@ export function ActionDropdown({
   const filteredDiscs = {
     // Only allow notifications for unnotified discs awaiting pickup
     toNotify: discs.filter(
-      (disc) => !disc.notified && disc.status === "awaiting pickup"
+      (disc) => !disc.notified && disc.status === "awaiting_pickup"
     ),
     // Only allow reminders for notified, unreminded discs awaiting pickup
     toRemind: discs.filter(
       (disc) =>
-        disc.notified && !disc.reminded && disc.status === "awaiting pickup"
+        disc.notified && !disc.reminded && disc.status === "awaiting_pickup"
     ),
     // Only allow time extension for discs awaiting pickup (includes abandoned discs)
     // and after the owner has been notified
     toAddTime: discs.filter(
-      (disc) => disc.status === "awaiting pickup" && disc.notified
+      (disc) => disc.status === "awaiting_pickup" && disc.notified
     ),
     // Only allow pick up of discs awaiting pickup
-    toPickUp: discs.filter((disc) => disc.status === "awaiting pickup"),
+    toPickUp: discs.filter((disc) => disc.status === "awaiting_pickup"),
     // Only allow archiving of discs that have passed their held-until date
     // and are not already archived
     toArchive: discs.filter(
       (disc) => dateHasPassed(disc.heldUntil) && disc.status !== "archived"
     ),
-    // Only allow picked up or archived discs to be restored to "awaiting pickup"
+    // Only allow picked up or archived discs to be restored to awaiting pickup
     toRestore: discs.filter((disc) =>
-      ["picked up", "archived"].includes(disc.status)
+      ["picked_up", "archived"].includes(disc.status)
     ),
   };
 
@@ -141,11 +141,11 @@ export function ActionDropdown({
   };
 
   const handleStatusUpdate = async (
-    status: "awaiting pickup" | "picked up" | "archived"
+    status: "awaiting_pickup" | "picked_up" | "archived"
   ) => {
     const category =
-      status === "awaiting pickup" ? "toRestore"
-      : status === "picked up" ? "toPickUp"
+      status === "awaiting_pickup" ? "toRestore"
+      : status === "picked_up" ? "toPickUp"
       : "toArchive";
     const idsToUpdate = filteredDiscs[category].map((disc) => disc.id);
     const updateDiscStatusWithIds = updateDiscStatus.bind(
@@ -250,7 +250,7 @@ export function ActionDropdown({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={() => handleStatusUpdate("picked up")}
+            onClick={() => handleStatusUpdate("picked_up")}
             disabled={filteredDiscs.toPickUp.length === 0}
           >
             <DiscsPickedUp
@@ -274,7 +274,7 @@ export function ActionDropdown({
             />
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => handleStatusUpdate("awaiting pickup")}
+            onClick={() => handleStatusUpdate("awaiting_pickup")}
             disabled={filteredDiscs.toRestore.length === 0}
           >
             <RestoreDiscs

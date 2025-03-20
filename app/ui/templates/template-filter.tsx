@@ -44,7 +44,7 @@ export function TemplateFilter<TData>({ table }: TemplateFilterProps<TData>) {
             All templates
           </span>
         </SelectItem>
-        <SelectItem value="notification">
+        <SelectItem value="initial">
           <span className="flex items-center">
             <Notify className="w-5 mr-2" aria-hidden="true" />
             Notification

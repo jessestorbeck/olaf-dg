@@ -13,8 +13,8 @@ import { templates } from "./templates";
 // Note that this type must be exported (along with the table itself)
 // in order for migration generation to work
 export const discStatusEnum = pgEnum("status", [
-  "awaiting pickup",
-  "picked up",
+  "awaiting_pickup",
+  "picked_up",
   "archived",
 ]);
 
@@ -31,11 +31,10 @@ export const discs = pgTable("discs", {
   mold: varchar({ length: 256 }),
   location: varchar({ length: 256 }),
   notes: text(),
-  notificationTemplate: uuid("notification_template").references(
-    () => templates.id,
-    { onDelete: "set null" }
-  ),
-  notificationText: text("notification_text"),
+  initialTemplate: uuid("initial_template").references(() => templates.id, {
+    onDelete: "set null",
+  }),
+  initialText: text("initial_text"),
   reminderTemplate: uuid("reminder_template").references(() => templates.id, {
     onDelete: "set null",
   }),
@@ -46,7 +45,7 @@ export const discs = pgTable("discs", {
   extensionText: text("extension_text"),
   notified: boolean().notNull().default(false),
   reminded: boolean().notNull().default(false),
-  status: discStatusEnum().notNull().default("awaiting pickup"),
+  status: discStatusEnum().notNull().default("awaiting_pickup"),
   heldUntil: timestamp("held_until", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -71,8 +70,8 @@ export type NotificationPreviewDisc = Omit<
   | "notified"
   | "reminded"
   | "status"
-  | "notificationTemplate"
-  | "notificationText"
+  | "initialTemplate"
+  | "initialText"
   | "reminderTemplate"
   | "reminderText"
   | "extensionTemplate"

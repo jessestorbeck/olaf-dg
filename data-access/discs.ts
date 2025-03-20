@@ -37,8 +37,8 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
         mold: undefined,
         location: undefined,
         notes: undefined,
-        notificationTemplate: undefined,
-        notificationText: undefined,
+        initialTemplate: undefined,
+        initialText: undefined,
         reminderTemplate: undefined,
         reminderText: undefined,
         extensionTemplate: undefined,
@@ -72,12 +72,12 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
           fieldConditions.push(eq(discs[field], value === "true"));
         } else if (
           field === "status" &&
-          ["awaiting pickup", "picked up", "archived"].includes(value)
+          ["awaiting_pickup", "picked_up", "archived"].includes(value)
         ) {
           fieldConditions.push(
             eq(
               discs[field],
-              value as "awaiting pickup" | "picked up" | "archived"
+              value as "awaiting_pickup" | "picked_up" | "archived"
             )
           );
         } else if (field.endsWith("Template")) {
@@ -100,7 +100,7 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
       "mold",
       "location",
       "notes",
-      "notificationText",
+      "initialText",
       "reminderText",
       "extensionText",
     ];
@@ -176,7 +176,7 @@ export async function fetchCardData() {
     let abandoned = 0;
     const players: string[] = [];
     data.forEach((disc) => {
-      if (disc.status === "awaiting pickup") {
+      if (disc.status === "awaiting_pickup") {
         totalInventory++;
         if (dateHasPassed(disc.heldUntil)) {
           abandoned++;
@@ -211,8 +211,8 @@ export type AddDiscState = {
     mold?: string;
     location?: string;
     notes?: string;
-    notificationTemplate?: string;
-    notificationText?: string;
+    initialTemplate?: string;
+    initialText?: string;
     reminderTemplate?: string;
     reminderText?: string;
     extensionTemplate?: string;
@@ -229,8 +229,8 @@ export type AddDiscState = {
     mold?: string[];
     location?: string[];
     notes?: string[];
-    notificationTemplate?: string[];
-    notificationText?: string[];
+    initialTemplate?: string[];
+    initialText?: string[];
     reminderTemplate?: string[];
     reminderText?: string[];
     extensionTemplate?: string[];
@@ -280,8 +280,8 @@ export async function addDisc(
     // so that notifications are always up to date with changes to templates and user settings
     // I tried to integrate this logic into the Zod schema,
     // but this method seemed more straightforward
-    dataToInsert.notificationText =
-      dataToInsert.notificationTemplate ? null : dataToInsert.notificationText;
+    dataToInsert.initialText =
+      dataToInsert.initialTemplate ? null : dataToInsert.initialText;
     dataToInsert.reminderText =
       dataToInsert.reminderTemplate ? null : dataToInsert.reminderText;
     dataToInsert.extensionText =
@@ -377,13 +377,13 @@ export async function editDisc(
         // (a) for initial and reminder notifications, don't update the text if the notification has already been sent
         // (b) if a template is being used, set the text to null
         // (c) if a template is NOT being used, set the text to the incoming form data
-        notificationText: sql<string>`
+        initialText: sql<string>`
           CASE
             WHEN ${discs.notified} = FALSE
               -- If using a template, set the text to null; if custom, set to the incoming form data 
-              THEN ${validatedFields.data.notificationTemplate ? null : validatedFields.data.notificationText}
+              THEN ${validatedFields.data.initialTemplate ? null : validatedFields.data.initialText}
             -- If the notification has already been sent, keep the existing text
-            ELSE ${discs.notificationText}
+            ELSE ${discs.initialText}
           END`,
         reminderText: sql<string>`
           CASE
@@ -436,8 +436,8 @@ export async function sendNotifications(
 
     const booleanField = mode === "initial" ? "notified" : "reminded";
     const templateField =
-      mode === "initial" ? "notificationTemplate" : "reminderTemplate";
-    const textField = mode === "initial" ? "notificationText" : "reminderText";
+      mode === "initial" ? "initialTemplate" : "reminderTemplate";
+    const textField = mode === "initial" ? "initialText" : "reminderText";
 
     const [userSettings, templates] = await Promise.all([
       fetchUserSettings(),
@@ -551,7 +551,7 @@ export async function addTimeToDiscs(
 
 export async function updateDiscStatus(
   ids: string[],
-  status: "awaiting pickup" | "picked up" | "archived"
+  status: "awaiting_pickup" | "picked_up" | "archived"
 ): Promise<ToastState> {
   try {
     // Auth check
@@ -564,7 +564,9 @@ export async function updateDiscStatus(
       .where(and(eq(discs.userId, userId), inArray(discs.id, ids)));
     revalidatePath("/dashboard/discs");
     const toastParticiple =
-      validatedStatus === "awaiting pickup" ? "restored" : validatedStatus;
+      validatedStatus === "awaiting_pickup" ? "restored" : (
+        validatedStatus?.replace("_", " ")
+      );
     return {
       toast: {
         title: `Disc(s) ${toastParticiple}!`,

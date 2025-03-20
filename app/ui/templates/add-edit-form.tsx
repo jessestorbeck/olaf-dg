@@ -172,7 +172,7 @@ export function AddEditForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="notification">Notification</SelectItem>
+                      <SelectItem value="initial">Initial</SelectItem>
                       <SelectItem value="reminder">Reminder</SelectItem>
                       <SelectItem value="extension">Extension</SelectItem>
                     </SelectContent>

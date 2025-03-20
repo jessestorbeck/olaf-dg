@@ -102,7 +102,7 @@ export const CreateTemplateSchema = createInsertSchema(templates, {
   // Unfortunately, it seems like there's no way to add a user-facing message
   // to the ZodEnum which createInsertSchema infers from the database schema
   // So we have to just overwrite it with the same enum and the desired message
-  type: z.enum(["notification", "reminder", "extension"], {
+  type: z.enum(["initial", "reminder", "extension"], {
     message: "You must select a template type",
   }),
 });
@@ -131,14 +131,14 @@ export const CreateDiscSchema = createInsertSchema(discs, {
   mold: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   location: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   notes: (schema) => schema.trim().max(maxLenText, tooLong(maxLenText)),
-  notificationTemplate: (schema) =>
+  initialTemplate: (schema) =>
     schema.or(
       z
         .string()
         .regex(/^custom$/)
         .transform(() => null)
     ),
-  notificationText: (schema) =>
+  initialText: (schema) =>
     schema
       .trim()
       .min(1, { message: "Notification text is required" })
@@ -179,8 +179,8 @@ const DiscExtensions = {
   mold: CreateDiscSchema.shape.mold,
   location: CreateDiscSchema.shape.location,
   notes: CreateDiscSchema.shape.notes,
-  notificationTemplate: CreateDiscSchema.shape.notificationTemplate,
-  notificationText: CreateDiscSchema.shape.notificationText,
+  initialTemplate: CreateDiscSchema.shape.initialTemplate,
+  initialText: CreateDiscSchema.shape.initialText,
   reminderTemplate: CreateDiscSchema.shape.reminderTemplate,
   reminderText: CreateDiscSchema.shape.reminderText,
   extensionTemplate: CreateDiscSchema.shape.extensionTemplate,
@@ -191,9 +191,9 @@ export const SelectDiscSchema = createSelectSchema(discs, {
   // Need to reverse the transform for custom templates when selecting
   // For some reason, extending the schema wasn't working here,
   // and I couldn't get the transform to work correctly:
-  // e.g., notificationTemplate: (schema) => schema.transform((val) => val ?? "custom"),
+  // e.g., initialTemplate: (schema) => schema.transform((val) => val ?? "custom"),
   // Therefore, I'm just overwriting the schema
-  notificationTemplate: z
+  initialTemplate: z
     .string()
     .uuid()
     .nullable()

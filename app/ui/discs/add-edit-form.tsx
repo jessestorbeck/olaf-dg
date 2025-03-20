@@ -59,8 +59,8 @@ export function AddEditForm({
   userSettings: UserSettings;
 }) {
   // Sort templates by type and default
-  const notificationTemplates = templates
-    .filter((template) => template.type === "notification")
+  const initialTemplates = templates
+    .filter((template) => template.type === "initial")
     // sort by isDefault first, then by name
     .sort(
       (a, b) =>
@@ -105,18 +105,17 @@ export function AddEditForm({
       // Template-related defaults get defined here inside the component,
       // since they depend on the templates prop
       // Set default values for notification templates
-      notificationTemplate:
-        disc?.notificationTemplate || notificationTemplates[0].id,
+      initialTemplate: disc?.initialTemplate || initialTemplates[0].id,
       reminderTemplate: disc?.reminderTemplate || reminderTemplates[0].id,
       extensionTemplate: disc?.extensionTemplate || extensionTemplates[0].id,
       // Set default values for notification text fields
-      notificationText:
+      initialText:
         // Use the disc's notification text if it exists
-        disc?.notificationText ||
+        disc?.initialText ||
         // Otherwise, generate the text from the disc's template
         // or use the default template if the former is not set
         getNotificationText(
-          disc?.notificationTemplate || notificationTemplates[0].id,
+          disc?.initialTemplate || initialTemplates[0].id,
           templates,
           disc || {
             name: "",
@@ -182,8 +181,8 @@ export function AddEditForm({
     }
     const notificationFields: notificationField[] = [
       {
-        template: "notificationTemplate",
-        text: "notificationText",
+        template: "initialTemplate",
+        text: "initialText",
         skip:
           disc?.notified ||
           ["picked_up", "archived"].includes(disc?.status || ""),
@@ -386,30 +385,30 @@ export function AddEditForm({
           <span className="font-semibold">Notifications</span>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              {/* Select notification template */}
+              {/* Select initial template */}
               <FormField
                 control={form.control}
-                name="notificationTemplate"
+                name="initialTemplate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notification template</FormLabel>
+                    <FormLabel>Initial template</FormLabel>
                     <Select
                       onValueChange={(e) => {
                         // Set notification text with the selected template,
                         // unless it's a custom template (in which case, do nothing)
                         if (e !== "custom") {
-                          const notificationText = getNotificationText(
+                          const initialText = getNotificationText(
                             e,
                             templates,
                             previewDisc,
                             userSettings
                           );
-                          form.setValue("notificationText", notificationText);
+                          form.setValue("initialText", initialText);
                         }
                         field.onChange(e);
                       }}
                       {...field}
-                      value={field.value || notificationTemplates[0].id}
+                      value={field.value || initialTemplates[0].id}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -427,7 +426,7 @@ export function AddEditForm({
                       </FormControl>
                       <SelectContent>
                         <SelectItem value={"custom"}>Custom</SelectItem>
-                        {notificationTemplates.map((template) => (
+                        {initialTemplates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
                             {template.name}
                           </SelectItem>
@@ -438,13 +437,13 @@ export function AddEditForm({
                   </FormItem>
                 )}
               />
-              {/* Notification text */}
+              {/* Initial text */}
               <FormField
                 control={form.control}
-                name="notificationText"
+                name="initialText"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notification text</FormLabel>
+                    <FormLabel>Initial text</FormLabel>
                     <FormControl>
                       <Textarea
                         rows={4}
@@ -467,7 +466,7 @@ export function AddEditForm({
                         value={
                           field.value ||
                           getNotificationText(
-                            form.getValues("notificationTemplate") || "",
+                            form.getValues("initialTemplate") || "",
                             templates,
                             previewDisc,
                             userSettings
@@ -475,7 +474,7 @@ export function AddEditForm({
                         }
                         // Set to custom if user types in the field
                         onChange={(e) => {
-                          form.setValue("notificationTemplate", "custom");
+                          form.setValue("initialTemplate", "custom");
                           field.onChange(e);
                         }}
                       />
