@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql, eq, ilike, inArray, and, or, desc, SQL } from "drizzle-orm";
+import { z } from "zod";
 
 import { db } from "@/db/index";
 import { discs, SelectDisc } from "@/db/schema/discs";
@@ -68,20 +69,30 @@ export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
     const fieldConditions: SQL[] = [];
     Object.entries(searchFields.disc).forEach(([field, value]) => {
       if (value) {
+        // Need to deal with booleans, enum, and uuid values specially,
+        // since invalid values will cause unexpected behavior
         if (field === "notified" || field === "reminded") {
-          fieldConditions.push(eq(discs[field], value === "true"));
-        } else if (
-          field === "status" &&
-          ["awaiting_pickup", "picked_up", "archived"].includes(value)
-        ) {
-          fieldConditions.push(
-            eq(
-              discs[field],
-              value as "awaiting_pickup" | "picked_up" | "archived"
-            )
-          );
+          if (value === "true" || value === "false") {
+            fieldConditions.push(eq(discs[field], value === "true"));
+          } else {
+            // Make the condition necessarily false, so no results if invalid value
+            fieldConditions.push(sql`FALSE`);
+          }
+        } else if (field === "status") {
+          if (["awaiting_pickup", "picked_up", "archived"].includes(value)) {
+            fieldConditions.push(eq(discs[field as keyof SelectDisc], value));
+          } else {
+            fieldConditions.push(sql`FALSE`);
+          }
         } else if (field.endsWith("Template")) {
-          fieldConditions.push(eq(discs[field as keyof SelectDisc], value));
+          try {
+            const searchValue = z.string().uuid().parse(value);
+            fieldConditions.push(
+              eq(discs[field as keyof SelectDisc], searchValue)
+            );
+          } catch {
+            fieldConditions.push(sql`FALSE`);
+          }
         } else {
           fieldConditions.push(
             ilike(discs[field as keyof SelectDisc], `%${value}%`)
