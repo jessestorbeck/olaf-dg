@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { sql, eq, ne, ilike, inArray, and, or, desc } from "drizzle-orm";
+import { sql, eq, ne, ilike, and, or, inArray, desc } from "drizzle-orm";
 
 import { db } from "@/db/index";
-import { templates, SelectTemplate } from "@/db/schema/templates";
+import { templates, SelectTemplate, DiscCount } from "@/db/schema/templates";
+import { discs } from "@/db/schema/discs";
+
 import {
   CreateTemplateSchema,
   SelectTemplateSchema,
@@ -39,6 +41,51 @@ export async function fetchFilteredTemplates(
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch templates");
+  }
+}
+
+export async function fetchDiscCounts(): Promise<DiscCount[]> {
+  try {
+    // Auth check
+    const userId = await fetchUserId();
+
+    const counts = await db
+      .select({
+        id: templates.id,
+        discCount: db.$count(
+          discs,
+          sql`CASE 
+            WHEN ${templates.type} = 'initial'
+              THEN ${discs.initialTemplate} = ${templates.id}
+            WHEN ${templates.type} = 'reminder'
+              THEN ${discs.reminderTemplate} = ${templates.id}
+            WHEN ${templates.type} = 'extension'
+              THEN ${discs.extensionTemplate} = ${templates.id}
+            ELSE FALSE
+          END`
+        ),
+        // Consider extension templates always "unused",
+        // since they can be reused as many times as needed
+        discCountUnused: db.$count(
+          discs,
+          sql`CASE 
+            WHEN ${templates.type} = 'initial'
+              THEN ${discs.initialTemplate} = ${templates.id} AND ${discs.notified} = FALSE AND ${discs.status} = 'awaiting_pickup'
+            WHEN ${templates.type} = 'reminder'
+              THEN ${discs.reminderTemplate} = ${templates.id} AND ${discs.reminded} = FALSE AND ${discs.status} = 'awaiting_pickup'
+            WHEN ${templates.type} = 'extension'
+              THEN ${discs.extensionTemplate} = ${templates.id} AND ${discs.status} = 'awaiting_pickup'
+            ELSE FALSE
+          END`
+        ),
+      })
+      .from(templates)
+      .where(eq(templates.userId, userId));
+
+    return counts;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch template counts");
   }
 }
 
@@ -326,20 +373,78 @@ export async function deleteTemplates(ids: string[]): Promise<ToastState> {
   try {
     // Auth check
     const userId = await fetchUserId();
-    // Delete the templates with the given ids
-    await db.delete(templates).where(
-      and(
-        eq(templates.userId, userId),
-        inArray(templates.id, ids),
-        // Make sure default templates can't be deleted
-        ne(templates.isDefault, true)
-      )
-    );
+
+    let deleted: SelectTemplate[] = [];
+    await db.transaction(async (tx) => {
+      // First update the discs table so that discs set to use to-be-deleted templates
+      // are updated to use the default templates of the same type
+      // Subquery to get the default templates for each type
+      const defaultTemplates = tx.$with("default_templates").as(
+        tx
+          .select({
+            id: templates.id,
+            type: templates.type,
+          })
+          .from(templates)
+          .where(
+            and(eq(templates.userId, userId), eq(templates.isDefault, true))
+          )
+      );
+      await tx
+        .with(defaultTemplates)
+        .update(discs)
+        .set({
+          initialTemplate: sql<string>`
+          CASE
+            WHEN ${and(inArray(discs.initialTemplate, ids), eq(discs.notified, false))}
+              THEN (SELECT id FROM default_templates WHERE type = 'initial' LIMIT 1)
+            ELSE ${discs.initialTemplate}
+          END
+        `,
+          reminderTemplate: sql<string>`
+          CASE
+            WHEN ${and(inArray(discs.reminderTemplate, ids), eq(discs.reminded, false))}
+              THEN (SELECT id FROM default_templates WHERE type = 'reminder' LIMIT 1)
+            ELSE ${discs.reminderTemplate}
+          END
+        `,
+          extensionTemplate: sql<string>`
+          CASE
+            WHEN ${inArray(discs.extensionTemplate, ids)}
+              THEN (SELECT id FROM default_templates WHERE type = 'extension' LIMIT 1)
+            ELSE ${discs.extensionTemplate}
+          END
+        `,
+        })
+        .where(
+          and(
+            eq(discs.userId, userId),
+            or(
+              inArray(discs.initialTemplate, ids),
+              inArray(discs.reminderTemplate, ids),
+              inArray(discs.extensionTemplate, ids)
+            )
+          )
+        );
+
+      // Then delete the templates with the given ids
+      deleted = await tx
+        .delete(templates)
+        .where(
+          and(
+            eq(templates.userId, userId),
+            inArray(templates.id, ids),
+            // Make sure default templates can't be deleted
+            ne(templates.isDefault, true)
+          )
+        )
+        .returning();
+    });
     revalidatePath("/dashboard/templates");
     return {
       toast: {
         title: "Templates(s) deleted!",
-        message: `Deleted ${ids.length} templates`,
+        message: `Deleted ${deleted.length} templates`,
       },
     };
   } catch (error) {

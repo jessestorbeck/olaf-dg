@@ -8,7 +8,10 @@ import { CreateTemplate } from "@/app/ui/templates/action-buttons";
 import { primaryFont } from "@/app/ui/fonts";
 import { DiscsTableSkeleton } from "@/app/ui/skeletons";
 import { DataTableWrapper } from "@/app/ui/templates/data-table-wrapper";
-import { fetchFilteredTemplates } from "@/data-access/templates";
+import {
+  fetchDiscCounts,
+  fetchFilteredTemplates,
+} from "@/data-access/templates";
 import { fetchUserSettings } from "@/data-access/users";
 
 export const metadata: Metadata = {
@@ -20,11 +23,17 @@ export default async function Page(props: {
     query?: string;
   }>;
 }) {
-  const searchParams = await props.searchParams;
-  const query = searchParams?.query || "";
+  const searchParamsPromise = props.searchParams;
+  const userSettingsPromise = fetchUserSettings();
+  const discCountsPromise = fetchDiscCounts();
+  const [searchParams, userSettings, discCounts] = await Promise.all([
+    searchParamsPromise,
+    userSettingsPromise,
+    discCountsPromise,
+  ]);
 
+  const query = searchParams?.query || "";
   const data = await fetchFilteredTemplates(query);
-  const userSettings = await fetchUserSettings();
 
   return (
     <div className="w-full">
@@ -37,7 +46,11 @@ export default async function Page(props: {
       </div>
       <Suspense fallback={<DiscsTableSkeleton />}>
         <div className="container mx-auto py-4">
-          <DataTableWrapper data={data} userSettings={userSettings} />
+          <DataTableWrapper
+            data={data}
+            userSettings={userSettings}
+            discCounts={discCounts}
+          />
         </div>
       </Suspense>
     </div>

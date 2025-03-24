@@ -30,7 +30,7 @@ import { ActionDropdown } from "./action-dropdown";
 import { PreviewDiscPopover } from "./preview-disc-popover";
 import { TemplateFilter } from "./template-filter";
 import { NotificationPreviewDisc } from "@/db/schema/discs";
-import { SelectTemplate } from "@/db/schema/templates";
+import { SelectTemplate, DiscCount } from "@/db/schema/templates";
 
 interface DataTableProps<TData extends SelectTemplate, TValue> {
   previewDiscState: [
@@ -39,12 +39,14 @@ interface DataTableProps<TData extends SelectTemplate, TValue> {
   ];
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  discCounts: DiscCount[];
 }
 
 export function DataTable<TData extends SelectTemplate, TValue>({
   previewDiscState,
   columns,
   data,
+  discCounts,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [rowSelection, setRowSelection] = React.useState({});
@@ -97,6 +99,7 @@ export function DataTable<TData extends SelectTemplate, TValue>({
             .rows.map((row) => row.original)}
           totalTemplates={table.getFilteredRowModel().rows.length}
           actionSet="selected"
+          discCounts={discCounts}
         />
         <TemplateFilter table={table} />
         <div className="flex gap-2 ml-auto">

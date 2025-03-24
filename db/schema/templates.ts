@@ -37,3 +37,9 @@ export const templates = pgTable("templates", {
 
 export type InsertTemplate = typeof templates.$inferInsert;
 export type SelectTemplate = typeof templates.$inferSelect;
+
+export type DiscCount = {
+  id: string;
+  discCount: number;
+  discCountUnused: number;
+};

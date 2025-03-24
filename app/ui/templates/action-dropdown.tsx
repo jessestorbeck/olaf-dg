@@ -31,19 +31,37 @@ import { AlertTable } from "./alert-table";
 import { useToast } from "@/app/hooks/use-toast";
 import { makeDefault, deleteTemplates } from "@/data-access/templates";
 import { ToastState } from "@/app/ui/toast";
-import { SelectTemplate } from "@/db/schema/templates";
+import { DiscCount, SelectTemplate } from "@/db/schema/templates";
 
 export function ActionDropdown({
   templates,
   totalTemplates,
   actionSet,
+  discCounts,
 }: {
   templates: SelectTemplate[];
   totalTemplates?: number;
   actionSet: "row" | "selected";
+  discCounts: DiscCount[];
 }) {
   // Defaut templates can't be deleted
-  const templatesToDelete = templates.filter((template) => !template.isDefault);
+  const templatesToDelete = templates
+    // Don't allow default templates to be deleted
+    .filter((template) => !template.isDefault)
+    // Add the discCountUnused property from disCounts to each template
+    .map((template) => {
+      const discCount = discCounts.find(
+        (discCount) => discCount.id === template.id
+      );
+      return {
+        ...template,
+        discCountUnused: discCount?.discCountUnused,
+      };
+    });
+  // Are there any discs affected by the deletion of these templates?
+  const affectedDiscs = templatesToDelete.some(
+    (el) => (el.discCountUnused || 0) > 0
+  );
   const idsToDelete = templatesToDelete.map((template) => template.id);
 
   // For toasts after all actions
@@ -153,6 +171,15 @@ export function ActionDropdown({
               {templatesToDelete.length} template
               {templatesToDelete.length > 1 ? "s" : ""}:
               <AlertTable templates={templatesToDelete} />
+              {affectedDiscs && (
+                <p className="mb-4">
+                  At least one of these templates is assigned to a disc awaiting
+                  pickup and may be used for future notifications. If you delete
+                  it, the affected discs will be reassigned to the appropriate
+                  default template. You can view the affected discs by clicking
+                  on the numbers in the table.
+                </p>
+              )}
               <span className="font-bold">This action cannot be undone.</span>
             </div>
           </AlertDialogDescription>

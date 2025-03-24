@@ -30,6 +30,7 @@ const columnAliases = {
   location: "Location",
   heldUntil: "Held until",
   status: "Status",
+  discCount: "Discs",
 };
 
 export function ColumnVisibility<TData>({

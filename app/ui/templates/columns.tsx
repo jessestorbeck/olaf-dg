@@ -21,7 +21,7 @@ import {
 import { LocalDateTime } from "@/app/ui/local-date-time";
 import { ActionDropdown } from "./action-dropdown";
 import { NotificationPreviewDisc } from "@/db/schema/discs";
-import { SelectTemplate } from "@/db/schema/templates";
+import { DiscCount, SelectTemplate } from "@/db/schema/templates";
 import { UserSettings } from "@/db/schema/users";
 
 const PreviewCell = ({
@@ -77,7 +77,8 @@ const columnHeader = (column: Column<SelectTemplate>, columnName: string) => {
 
 export function columns(
   previewDisc: NotificationPreviewDisc,
-  userSettings: UserSettings
+  userSettings: UserSettings,
+  discCounts: DiscCount[]
 ): ColumnDef<SelectTemplate>[] {
   return [
     {
@@ -174,6 +175,32 @@ export function columns(
       },
     },
     {
+      id: "discCount",
+      header: ({ column }) => columnHeader(column, "Discs"),
+      cell: ({ row }) => {
+        const templateId: string = row.original.id;
+        const discCount = discCounts.find(
+          (disc) => disc.id === templateId
+        )?.discCount;
+        return <div className="text-center">{discCount}</div>;
+      },
+      // Properties below are needed for sorting
+      accessorFn: (row) => {
+        const templateId: string = row.id;
+        return discCounts.find((template) => template.id === templateId)
+          ?.discCount;
+      },
+      sortingFn: (a, b) => {
+        const aCount =
+          discCounts.find((template) => template.id === a.original.id)
+            ?.discCount || 0;
+        const bCount =
+          discCounts.find((template) => template.id === b.original.id)
+            ?.discCount || 0;
+        return aCount - bCount;
+      },
+    },
+    {
       accessorKey: "createdAt",
       header: ({ column }) => columnHeader(column, "Created at"),
       cell: ({ row }) => {
@@ -194,7 +221,13 @@ export function columns(
       cell: ({ row }) => {
         const template = row.original;
 
-        return <ActionDropdown templates={[template]} actionSet="row" />;
+        return (
+          <ActionDropdown
+            templates={[template]}
+            actionSet="row"
+            discCounts={discCounts}
+          />
+        );
       },
       enableHiding: false,
     },
