@@ -6,7 +6,7 @@ import {
 } from "drizzle-zod";
 
 import { users } from "./schema/users";
-import { templates } from "./schema/templates";
+import { templates, SelectTemplate, DiscCount } from "./schema/templates";
 import { discs } from "./schema/discs";
 import { trends } from "./schema/trends";
 
@@ -115,10 +115,38 @@ export const SelectTemplateSchema = createSelectSchema(
   templates,
   TemplateExtensions
 );
-export const UpdateTemplateSchema = createUpdateSchema(
-  templates,
-  TemplateExtensions
-);
+// Wrapper function for the update schema to prevent
+// potential problems arising from changing template type
+export const UpdateTemplateSchema = (
+  template: SelectTemplate,
+  discCount: DiscCount
+) => {
+  return createUpdateSchema(templates, TemplateExtensions)
+    .refine(
+      (data) => {
+        if (template.isDefault && template.type !== data.type) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Cannot change the type of a default template",
+        path: ["type"],
+      }
+    )
+    .refine(
+      (data) => {
+        if (discCount.discCount > 0 && data.type !== template.type) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message: "Cannot change the type of a template assigned to discs",
+        path: ["type"],
+      }
+    );
+};
 
 // Disc schemas
 export const CreateDiscSchema = createInsertSchema(discs, {

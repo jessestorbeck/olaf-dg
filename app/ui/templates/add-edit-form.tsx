@@ -36,7 +36,7 @@ import {
 } from "@/data-access/templates";
 import { splitTemplateContent, getTemplatePreview } from "@/app/lib/utils";
 import { NotificationPreviewDisc } from "@/db/schema/discs";
-import { SelectTemplate } from "@/db/schema/templates";
+import { SelectTemplate, DiscCount } from "@/db/schema/templates";
 import { CreateTemplateSchema, UpdateTemplateSchema } from "@/db/validation";
 import { UserSettings } from "@/db/schema/users";
 
@@ -46,26 +46,32 @@ const formDefaults = {
   content: "",
 };
 
-export function AddEditForm({
-  template, // Supply template if editing
-  templateNames,
-  userSettings,
-}: {
-  template?: SelectTemplate;
+interface AddEditFormProps {
+  template?: SelectTemplate; // Supply template and discCount if editing
+  discCount?: DiscCount;
   templateNames: string[];
   userSettings: UserSettings;
-}) {
+}
+
+export function AddEditForm({
+  template,
+  discCount,
+  templateNames,
+  userSettings,
+}: AddEditFormProps) {
   // Set up the zod schema according to whether we're adding or editing
-  const TemplateSchema = template ? UpdateTemplateSchema : CreateTemplateSchema;
+  const TemplateSchema =
+    template && discCount ?
+      UpdateTemplateSchema(template, discCount)
+    : CreateTemplateSchema;
   // Extend the template schema to include name validation
-  const TemplateClientSchema = TemplateSchema.extend({
-    name: TemplateSchema.shape.name
-      // Just for client-side (same check done via query on the server)
-      // templateNames will not include the template being edited (see edit/page.tsx)
-      .refine((name) => !templateNames.includes(name), {
-        message: "A template with that name already exists",
-      }),
-  });
+  const TemplateClientSchema = TemplateSchema.refine(
+    (data) => !templateNames.includes(data.name),
+    {
+      message: "A template with that name already exists",
+      path: ["name"],
+    }
+  );
 
   // Set up form state and server action
   const initialAddState: AddTemplateState = {};

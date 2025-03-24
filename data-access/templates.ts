@@ -44,7 +44,7 @@ export async function fetchFilteredTemplates(
   }
 }
 
-export async function fetchDiscCounts(): Promise<DiscCount[]> {
+export async function fetchDiscCounts(id?: string): Promise<DiscCount[]> {
   try {
     // Auth check
     const userId = await fetchUserId();
@@ -80,7 +80,9 @@ export async function fetchDiscCounts(): Promise<DiscCount[]> {
         ),
       })
       .from(templates)
-      .where(eq(templates.userId, userId));
+      .where(
+        and(eq(templates.userId, userId), id ? eq(templates.id, id) : undefined)
+      );
 
     return counts;
   } catch (error) {
@@ -265,15 +267,21 @@ export async function editTemplate(
     // Auth check
     const userId = await fetchUserId();
 
+    // First must fetch the template and disc count for use in the validation schema
+    const [template, discCount] = await Promise.all([
+      fetchTemplateById(id),
+      fetchDiscCounts(id),
+    ]);
+
     // Extend the template schema to include name validation
     // This works just like in createTemplate, but we provide the id to
     // nameExists to ignore the name of the template being edited
-    const TemplateServerSchema = UpdateTemplateSchema.extend({
-      name: UpdateTemplateSchema.shape.name
-        // Just for server-side
-        .refine(async (name) => !(await nameExists(name, id)), {
-          message: "A template with that name already exists",
-        }),
+    const TemplateServerSchema = UpdateTemplateSchema(
+      template,
+      discCount[0]
+    ).refine(async (data) => !(await nameExists(data.name, id)), {
+      message: "A template with that name already exists",
+      path: ["name"],
     });
 
     const validatedFields = await TemplateServerSchema.safeParseAsync({

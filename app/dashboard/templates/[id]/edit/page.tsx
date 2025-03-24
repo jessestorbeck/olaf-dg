@@ -5,7 +5,10 @@ import { Metadata } from "next";
 
 import { AddEditForm } from "@/app/ui/templates/add-edit-form";
 import Breadcrumbs from "@/app/ui/breadcrumbs";
-import { fetchFilteredTemplates } from "@/data-access/templates";
+import {
+  fetchFilteredTemplates,
+  fetchDiscCounts,
+} from "@/data-access/templates";
 import { fetchUserSettings } from "@/data-access/users";
 
 export const metadata: Metadata = {
@@ -13,10 +16,13 @@ export const metadata: Metadata = {
 };
 
 export default async function Page(props: { params: Promise<{ id: string }> }) {
-  const params = await props.params;
+  const [params, userSettings, templates] = await Promise.all([
+    props.params,
+    fetchUserSettings(),
+    fetchFilteredTemplates(""),
+  ]);
   const id = params.id;
-  const userSettings = await fetchUserSettings();
-  const templates = await fetchFilteredTemplates("");
+  const discCounts = await fetchDiscCounts(id);
   const templateNames = templates
     // Since we want to be able to edit a template and save it with the same name,
     // filter out the template being edited from the list of names
@@ -42,6 +48,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       />
       <AddEditForm
         template={templateToEdit}
+        discCount={discCounts[0]}
         templateNames={templateNames}
         userSettings={userSettings}
       />
