@@ -340,6 +340,16 @@ export async function addDisc(
   revalidatePath("/dashboard/discs");
   // Pass the message for the toast as a query parameter
   redirect(`/dashboard/discs?title=${encodedTitle}&message=${encodedMessage}`);
+
+  // Add a fallback return statement to satisfy the function's return type
+  // As long as the redirect is successful, this code won't be executed
+  return {
+    toast: {
+      title: "Unknown error",
+      message: "An unexpected error occurred",
+    },
+    formData: Object.fromEntries(formData),
+  };
 }
 
 // Edit state is the same minus formData.addAnother and errors.addAnother
@@ -435,6 +445,16 @@ export async function editDisc(
   }
   revalidatePath("/dashboard/discs");
   redirect(`/dashboard/discs?title=${encodedTitle}&message=${encodedMessage}`);
+
+  // Add a fallback return statement to satisfy the function's return type
+  // As long as the redirect is successful, this code won't be executed
+  return {
+    toast: {
+      title: "Unknown error",
+      message: "An unexpected error occurred",
+    },
+    formData: Object.fromEntries(formData),
+  };
 }
 
 export async function sendNotifications(

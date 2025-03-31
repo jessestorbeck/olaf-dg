@@ -226,6 +226,16 @@ export async function addTemplate(
   redirect(
     `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
+
+  // Add a fallback return statement to satisfy the function's return type
+  // As long as the redirect is successful, this code won't be executed
+  return {
+    toast: {
+      title: "Unknown error",
+      message: "An unexpected error occurred",
+    },
+    formData: Object.fromEntries(formData),
+  };
 }
 
 export async function addDefaultTemplates(userId: string): Promise<void> {
@@ -325,6 +335,16 @@ export async function editTemplate(
   redirect(
     `/dashboard/templates?title=${encodedTitle}&message=${encodedMessage}`
   );
+
+  // Add a fallback return statement to satisfy the function's return type
+  // As long as the redirect is successful, this code won't be executed
+  return {
+    toast: {
+      title: "Unknown error",
+      message: "An unexpected error occurred",
+    },
+    formData: Object.fromEntries(formData),
+  };
 }
 
 export async function makeDefault(id: string): Promise<ToastState> {

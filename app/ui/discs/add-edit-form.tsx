@@ -172,51 +172,48 @@ export function AddEditForm({
     heldUntil: disc?.heldUntil || null,
   };
 
-  // onChange handler for fields needed for previews
-  const handleChange = () => {
-    interface notificationField {
-      template: keyof z.infer<typeof DiscSchema>;
-      text: keyof z.infer<typeof DiscSchema>;
-      skip?: boolean;
-    }
-    const notificationFields: notificationField[] = [
-      {
-        template: "initialTemplate",
-        text: "initialText",
-        skip:
-          disc?.notified ||
-          ["picked_up", "archived"].includes(disc?.status || ""),
-      },
-      {
-        template: "reminderTemplate",
-        text: "reminderText",
-        skip:
-          disc?.reminded ||
-          ["picked_up", "archived"].includes(disc?.status || ""),
-      },
-      {
-        template: "extensionTemplate",
-        text: "extensionText",
-        skip: ["picked_up", "archived"].includes(disc?.status || ""),
-      },
-    ];
+  // Handle changes to fields that generate notification text fields
+  interface notificationTextField {
+    name: keyof z.infer<typeof DiscSchema>;
+    template: string | null;
+    defaultTemplate: string;
+    skip?: boolean;
+  }
+  const notificationTextFields: notificationTextField[] = [
+    {
+      name: "initialText",
+      template: form.watch("initialTemplate"),
+      defaultTemplate: initialTemplates[0].id,
+      skip:
+        disc?.notified ||
+        ["picked_up", "archived"].includes(disc?.status || ""),
+    },
+    {
+      name: "reminderText",
+      template: form.watch("reminderTemplate"),
+      defaultTemplate: reminderTemplates[0].id,
+      skip:
+        disc?.reminded ||
+        ["picked_up", "archived"].includes(disc?.status || ""),
+    },
+    {
+      name: "extensionText",
+      template: form.watch("extensionTemplate"),
+      defaultTemplate: extensionTemplates[0].id,
+      skip: ["picked_up", "archived"].includes(disc?.status || ""),
+    },
+  ];
 
-    notificationFields.forEach((field) => {
-      // Skip a field if it's disabled in the form
-      if (field.skip) return;
-      const templateID = form.getValues(field.template);
-      if (
-        templateID &&
-        typeof templateID === "string" &&
-        templateID !== "custom"
-      ) {
+  const handleChange = () => {
+    notificationTextFields.forEach((field) => {
+      if (!field.skip && field.template !== "custom") {
         const notificationText = getNotificationText(
-          templateID,
+          field.template || field.defaultTemplate,
           templates,
           previewDisc,
           userSettings
         );
-        form.setValue(field.text, notificationText);
+        form.setValue(field.name, notificationText);
       }
     });
   };
@@ -463,15 +460,7 @@ export function AddEditForm({
                             ),
                         })}
                         {...field}
-                        value={
-                          field.value ||
-                          getNotificationText(
-                            form.getValues("initialTemplate") || "",
-                            templates,
-                            previewDisc,
-                            userSettings
-                          )
-                        }
+                        value={field.value || ""}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("initialTemplate", "custom");
@@ -559,15 +548,7 @@ export function AddEditForm({
                             ),
                         })}
                         {...field}
-                        value={
-                          field.value ||
-                          getNotificationText(
-                            form.getValues("reminderTemplate") || "",
-                            templates,
-                            previewDisc,
-                            userSettings
-                          )
-                        }
+                        value={field.value || ""}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("reminderTemplate", "custom");
@@ -650,15 +631,7 @@ export function AddEditForm({
                           ].includes(disc?.status || ""),
                         })}
                         {...field}
-                        value={
-                          field.value ||
-                          getNotificationText(
-                            form.getValues("extensionTemplate") || "",
-                            templates,
-                            previewDisc,
-                            userSettings
-                          )
-                        }
+                        value={field.value || ""}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("extensionTemplate", "custom");
