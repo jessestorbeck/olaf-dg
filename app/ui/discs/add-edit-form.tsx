@@ -460,7 +460,7 @@ export function AddEditForm({
                             ),
                         })}
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || undefined}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("initialTemplate", "custom");
@@ -548,7 +548,7 @@ export function AddEditForm({
                             ),
                         })}
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || undefined}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("reminderTemplate", "custom");
@@ -631,7 +631,7 @@ export function AddEditForm({
                           ].includes(disc?.status || ""),
                         })}
                         {...field}
-                        value={field.value || ""}
+                        value={field.value || undefined}
                         // Set to custom if user types in the field
                         onChange={(e) => {
                           form.setValue("extensionTemplate", "custom");
