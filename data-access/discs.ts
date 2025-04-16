@@ -18,6 +18,7 @@ import { dateHasPassed, getNotificationText } from "@/app/lib/utils";
 import { ToastState } from "@/app/ui/toast";
 import { fetchUserId, fetchUserSettings } from "@/data-access/users";
 import { fetchFilteredTemplates } from "@/data-access/templates";
+import { sendSMS } from "@/app/lib/sms";
 
 export async function fetchFilteredDiscs(query: string): Promise<SelectDisc[]> {
   try {
@@ -475,23 +476,23 @@ export async function sendNotifications(
       fetchFilteredTemplates(""),
     ]);
 
-    // Initial db update, in which we set notified/reminded to true
-    // and set the heldUntil date for initial notifications
-    const updatedDiscs: SelectDisc[] = await db
-      .update(discs)
-      .set({
-        [booleanField]: true,
-        heldUntil:
-          mode === "initial" ?
-            sql<Date>`NOW() + (INTERVAL '1 day' * ${userSettings.holdDuration})`
-          : discs.heldUntil,
-      })
-      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)))
-      .returning();
+    // Query db to get the discs to notify
+    const discsToNotify: SelectDisc[] = await db
+      .select()
+      .from(discs)
+      .where(
+        and(
+          eq(discs.userId, userId),
+          inArray(discs.id, ids),
+          eq(discs[booleanField], false)
+        )
+      );
 
-    // Build the CASE WHEN statement for setting each discs's notification text
-    const textValue = sql`CASE`;
-    updatedDiscs.forEach((disc) => {
+    interface NotifiedDisc extends SelectDisc {
+      apiResponse?: Promise<{ status: number; [key: string]: unknown }>;
+    }
+    // Send notifications
+    const notifiedDiscs: NotifiedDisc[] = discsToNotify.map((disc) => {
       // If the disc specifies a template, use it to generate the notification text
       // Otherwise, use the custom text will already be present
       const notificationText =
@@ -503,30 +504,85 @@ export async function sendNotifications(
             userSettings
           )
         : disc[textField];
-      textValue.append(
-        sql` WHEN ${discs.id} = ${disc.id} THEN ${notificationText}`
-      );
+
+      if (!notificationText) {
+        return disc;
+      }
+      // Send the SMS
+      try {
+        const apiResponse = sendSMS(disc.phone, notificationText);
+        return {
+          ...disc,
+          [textField]: notificationText,
+          apiResponse,
+        };
+      } catch (error) {
+        console.error("SMS error:", error);
+        // If the SMS fails, don't update the disc
+        return disc;
+      }
     });
-    textValue.append(sql` END`);
 
-    // Second db update, in which we set the notification text
-    const toNotify = await db
+    // Wait for API responses
+    await Promise.allSettled(notifiedDiscs.map((disc) => disc.apiResponse));
+
+    // Update the db if the notifications were sent successfully
+    // Start by building the CASE WHEN statements for the fields to be updated
+    const booleanCase = sql`CASE`;
+    const textCase = sql`CASE`;
+    const heldUntilCase = sql`CASE`;
+    // Have to use a for...of loop to properly await the API responses
+    // (even though we know from above the promises have already resolved)
+    for (const disc of notifiedDiscs) {
+      const apiResponse = await disc.apiResponse;
+      // If API response is 201, use the updated disc values
+      if (apiResponse?.status === 201) {
+        booleanCase.append(sql` WHEN ${discs.id} = ${disc.id} THEN TRUE`);
+        textCase.append(
+          sql` WHEN ${discs.id} = ${disc.id} THEN ${disc[textField]}`
+        );
+        // We'll only actually use this if sending an initial notification
+        heldUntilCase.append(
+          sql` WHEN ${discs.id} = ${disc.id} THEN NOW() + (INTERVAL '1 day' * ${userSettings.holdDuration})`
+        );
+      }
+    }
+    booleanCase.append(sql` ELSE ${discs[booleanField]} END`);
+    textCase.append(sql` ELSE ${discs[textField]} END`);
+    heldUntilCase.append(sql` ELSE ${discs.heldUntil} END`);
+
+    // Then update the db with the new values
+    const updatedDiscs = await db
       .update(discs)
-      .set({ [textField]: textValue })
+      .set({
+        [booleanField]: booleanCase,
+        [textField]: textCase,
+        heldUntil: mode === "initial" ? heldUntilCase : discs.heldUntil,
+      })
       .where(and(eq(discs.userId, userId), inArray(discs.id, ids)))
-      .returning({ phone: discs.phone, [textField]: discs[textField] });
-
-    // Send notifications
-    // STILL NEED TO IMPLEMENT THIS
-    console.log("toNotify", toNotify);
+      .returning();
 
     revalidatePath("/dashboard/discs");
-    return {
-      toast: {
-        title: `${mode[0].toUpperCase() + mode.slice(1)} notification(s) sent!`,
-        message: `Notified owners of ${ids.length} disc(s)`,
-      },
-    };
+
+    // Prepare toast
+    const updatedCount = updatedDiscs.filter(
+      (disc) => disc[booleanField] === true
+    ).length;
+    if (updatedCount === ids.length) {
+      return {
+        toast: {
+          title: `Sucessfully sent ${mode} notification(s)`,
+          message: `Notified owners of ${updatedCount} disc(s)`,
+        },
+      };
+    } else {
+      return {
+        toast: {
+          title: `Sent ${updatedCount} of ${ids.length} ${mode} notification(s)`,
+          message: `Notified owners of ${updatedCount} disc(s); ${ids.length - updatedCount} notification(s) failed to send`,
+        },
+      };
+    }
   } catch (error) {
     console.error("Database error: failed to notify disc owner(s)", error);
     return {
@@ -556,12 +612,41 @@ export async function addTimeToDiscs(
         },
       };
     }
-    await db
+
+    // Update the db with the new heldUntil dates
+    const discsToNotify = await db
       .update(discs)
       .set({
         heldUntil: sql<Date>`${discs.heldUntil} + INTERVAL '1 day' * ${validatedDays.data}`,
       })
-      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)));
+      .where(and(eq(discs.userId, userId), inArray(discs.id, ids)))
+      .returning();
+
+    // Notify disc owners of the new heldUntil date
+    const [userSettings, templates] = await Promise.all([
+      fetchUserSettings(),
+      fetchFilteredTemplates(""),
+    ]);
+    discsToNotify.forEach((disc) => {
+      const notificationText =
+        disc.extensionTemplate ?
+          getNotificationText(
+            disc.extensionTemplate,
+            templates,
+            disc,
+            userSettings
+          )
+        : disc.extensionText;
+      if (notificationText) {
+        // Send the SMS
+        try {
+          sendSMS(disc.phone, notificationText);
+        } catch (error) {
+          console.error("SMS error:", error);
+        }
+      }
+    });
+
     revalidatePath("/dashboard/discs");
     return {
       toast: {
