@@ -1,5 +1,5 @@
 {
-  "id": "1cf09fd0-4b07-48cf-8bf7-4681eee06101",
+  "id": "329ab49b-a86b-4652-8690-b2b80df6c6fc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -644,8 +644,7 @@
           "name": "laf",
           "type": "varchar(256)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'temp'"
+          "notNull": true
         },
         "hold_duration": {
           "name": "hold_duration",

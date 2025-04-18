@@ -148,18 +148,14 @@ export async function signUp(
         name: validatedFields.data.name,
         email: validatedFields.data.email,
         password: validatedFields.data.password,
+        laf: validatedFields.data.laf,
       },
     });
     try {
-      // Add the user's laf name (seems like this can't be done directly through auth.api.signUpEmail)
-      await db
-        .update(users)
-        .set({ laf: validatedFields.data.laf })
-        .where(eq(users.id, user.id));
       // Add default templates to the user's account
       await addDefaultTemplates(user.id);
     } catch (error) {
-      // If there's an error adding the user's laf name or default templates, delete the user
+      // If there's an error adding default templates, delete the user
       await db.delete(users).where(eq(users.id, user.id));
       throw error;
     }
@@ -176,8 +172,8 @@ export async function signUp(
       formData: Object.fromEntries(formData),
     };
   }
-  // Redirect to the login page
-  redirect("/login");
+  // Redirect to email verification page
+  redirect("/verify-email");
 }
 
 export type LoginState = {
@@ -195,7 +191,7 @@ export type LoginState = {
 export async function login(
   prevState: LoginState,
   formData: FormData
-): Promise<LoginState> {
+): Promise<LoginState | void> {
   // Validate formData
   const validatedFields = LoginSchema.safeParse({
     ...Object.fromEntries(formData),
@@ -221,6 +217,10 @@ export async function login(
     });
   } catch (error) {
     console.error("Error during login:", error);
+    // If email is unverified, redirect to verify page
+    if (error instanceof APIError && error.statusCode === 403) {
+      redirect("/verify-email");
+    }
     const message: string =
       error instanceof APIError ?
         error.message

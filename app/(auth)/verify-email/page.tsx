@@ -1,14 +1,14 @@
 import { Metadata } from "next";
-import { SignupForm } from "@/app/ui/auth/signup-form";
+import { VerifyEmail } from "@/app/ui/auth/verify-email";
 
 export const metadata: Metadata = {
-  title: "Signup",
+  title: "Verify email",
 };
 
 export default function Page() {
   return (
     <main>
-      <SignupForm />
+      <VerifyEmail />
     </main>
   );
 }
