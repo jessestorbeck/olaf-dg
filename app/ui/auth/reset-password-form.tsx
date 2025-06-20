@@ -13,27 +13,31 @@ import {
   FormField,
   FormItem,
   FormLabel,
+  FormDescription,
   FormMessage,
   FormRootError,
 } from "@/app/ui/form";
 import { Input } from "@/app/ui/input";
 import { Button } from "@/app/ui/button";
-import { ArrowRight } from "@/app/ui/icons";
-import { LoginState, login } from "@/data-access/users";
-import { LoginSchema } from "@/db/validation";
+import { ResetPasswordState, resetPassword } from "@/data-access/users";
+import { ResetPasswordSchema } from "@/db/validation";
 
-export function LoginForm() {
-  const form = useForm<z.infer<typeof LoginSchema>>({
-    resolver: zodResolver(LoginSchema),
+export function ResetPasswordForm({ token }: { token: string }) {
+  const form = useForm<z.infer<typeof ResetPasswordSchema>>({
+    resolver: zodResolver(ResetPasswordSchema),
     mode: "onTouched",
     defaultValues: {
-      email: "",
-      password: "",
+      token: token,
+      newPassword: "",
+      confirmNewPassword: "",
     },
   });
 
-  const initialState: LoginState = {};
-  const [state, formAction, pending] = useActionState(login, initialState);
+  const initialState: ResetPasswordState = {};
+  const [state, formAction, pending] = useActionState(
+    resetPassword,
+    initialState
+  );
 
   // For server-side error messages
   // and form reset on successful submission
@@ -41,7 +45,7 @@ export function LoginForm() {
     form.reset(state.formData);
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
-        form.setError(key as keyof z.infer<typeof LoginSchema>, {
+        form.setError(key as keyof z.infer<typeof ResetPasswordSchema>, {
           message: (value as string[])[0],
         });
       }
@@ -53,35 +57,40 @@ export function LoginForm() {
       <form action={formAction}>
         <div className="bg-gray-50 p-4 rounded-lg">
           <h1 className={`${primaryFont.className} mb-3 text-2xl`}>
-            Please log in to continue.
+            Please reset your password.
           </h1>
           <div className="space-y-4">
             <FormField
               control={form.control}
-              name="email"
+              name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>New password</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter your email address"
+                      placeholder="Enter your new password"
+                      type="password"
                       className="bg-background"
                       {...field}
                     />
                   </FormControl>
+                  <FormDescription>
+                    Password must be at least 8 characters and contain a number,
+                    uppercase letter, lowercase letter, and special character.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name="password"
+              name="confirmNewPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Confirm new password</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter your password"
+                      placeholder="Confirm your new password"
                       type="password"
                       className="bg-background"
                       {...field}
@@ -91,25 +100,27 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="token"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input type="hidden" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
-          <Button type="submit" disabled={pending} className="mt-4 w-full">
-            Log in
-            <ArrowRight className="ml-auto h-5 w-5 text-gray-50" />
-          </Button>
           <FormRootError className="mt-2" />
-          <div className="mt-2">
-            <div>
-              No account yet?
-              <Button type="button" variant={"link"} className="pl-1 text-base">
-                <Link href={"/signup"}>Sign up</Link>
-              </Button>
-            </div>
-            <div>
-              Forgot your password?
-              <Button type="button" variant={"link"} className="pl-1 text-base">
-                <Link href={"/forgot-password"}>Request reset</Link>
-              </Button>
-            </div>
+          <div className="flex flex-col md:flex-row justify-end gap-2 mt-4">
+            <Button type="button" variant="outline">
+              <Link href={"/login"}>Cancel</Link>
+            </Button>
+            <Button type="submit" disabled={pending}>
+              Reset password
+            </Button>
           </div>
         </div>
       </form>

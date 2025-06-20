@@ -164,7 +164,7 @@ export function SignupForm() {
           <div className="mt-2">
             Already have an account?
             <Button type="button" variant={"link"} className="pl-1 text-base">
-              <Link href={"/login"}>Log in!</Link>
+              <Link href={"/login"}>Log in</Link>
             </Button>
           </div>
         </div>

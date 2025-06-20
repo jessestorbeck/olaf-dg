@@ -17,12 +17,21 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/ui/popover";
 import { Input } from "@/app/ui/input";
 import { Button } from "@/app/ui/button";
+import { UpdatePasswordAlert } from "@/app/ui/settings/update-password-alert";
+import { UpdateEmailAlert } from "@/app/ui/settings/update-email-alert";
+import { DeleteAccountAlert } from "@/app/ui/settings/delete-account-alert";
 import { useToast } from "@/app/hooks/use-toast";
 import { updateUserSettings, UpdateUserState } from "@/data-access/users";
 import { UserSettings } from "@/db/schema/users";
 import { UserSettingsSchema } from "@/db/validation";
 
-export function EditForm({ userSettings }: { userSettings: UserSettings }) {
+export function EditForm({
+  userEmail,
+  userSettings,
+}: {
+  userEmail: string;
+  userSettings: UserSettings;
+}) {
   const initialState: UpdateUserState = {
     formData: {
       ...userSettings,
@@ -162,19 +171,9 @@ export function EditForm({ userSettings }: { userSettings: UserSettings }) {
       <div className="bg-gray-50 p-4 mt-8 rounded-lg border border-destructive space-y-4">
         <span className="font-semibold text-destructive">Danger zone</span>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
-          >
-            Update password
-          </Button>
-          <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
-          >
-            Update email
-          </Button>
-          <Button variant="destructive">Delete account</Button>
+          <UpdatePasswordAlert />
+          <UpdateEmailAlert userEmail={userEmail} />
+          <DeleteAccountAlert />
         </div>
       </div>
     </div>

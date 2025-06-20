@@ -15,7 +15,7 @@ export function VerifyEmail() {
       </p>
       <p>
         Verification link expired?
-        <Button type="button" variant={"link"} className="pl-1 text-base">
+        <Button type="button" variant={"link"} className="pl-0.5 text-base">
           <Link href={"/login"}>Try logging in again.</Link>
         </Button>
       </p>

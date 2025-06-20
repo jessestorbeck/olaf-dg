@@ -43,6 +43,15 @@ export const UserSettingsSchema = z.object({
 });
 
 // Auth schemas
+const passwordValidation = z
+  .string()
+  .min(8, { message: "Must be at least 8 characters" })
+  .regex(/[a-z]/, { message: "Must contain a lowercase letter" })
+  .regex(/[A-Z]/, { message: "Must contain an uppercase letter" })
+  .regex(/\d/, { message: "Must contain a number" })
+  .regex(/[^a-zA-Z\d\s]/, {
+    message: "Must contain a special character",
+  });
 export const SignupSchema = z
   .object({
     name: z.string().trim().min(1, { message: "Name is required" }),
@@ -52,15 +61,7 @@ export const SignupSchema = z
       .min(1, { message: "Lost-and-found name is required" })
       .max(maxLenField, tooLong(maxLenField)),
     email: z.string().email(),
-    password: z
-      .string()
-      .min(8, { message: "Must be at least 8 characters" })
-      .regex(/[a-z]/, { message: "Must contain a lowercase letter" })
-      .regex(/[A-Z]/, { message: "Must contain an uppercase letter" })
-      .regex(/\d/, { message: "Must contain a number" })
-      .regex(/[^a-zA-Z\d\s]/, {
-        message: "Must contain a special character",
-      }),
+    password: passwordValidation,
     confirmPassword: z.string(),
   })
   .superRefine(({ confirmPassword, password }, ctx) => {
@@ -75,6 +76,62 @@ export const SignupSchema = z
 export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
+});
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email(),
+});
+export const ResetPasswordSchema = z
+  .object({
+    token: z.string(),
+    newPassword: passwordValidation,
+    confirmNewPassword: z.string(),
+  })
+  .superRefine(({ confirmNewPassword, newPassword }, ctx) => {
+    if (confirmNewPassword !== newPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "New passwords do not match",
+        path: ["confirmNewPassword"],
+      });
+    }
+  });
+// UpdatePasswordSchema is used when the user is logged in
+// in contrast to ResetPasswordSchema which is used when the user has forgotten their password
+export const UpdatePasswordSchema = z
+  .object({
+    currentPassword: z.string(),
+    newPassword: passwordValidation,
+    confirmNewPassword: z.string(),
+  })
+  .superRefine(({ confirmNewPassword, newPassword }, ctx) => {
+    if (confirmNewPassword !== newPassword) {
+      ctx.addIssue({
+        code: "custom",
+        message: "New passwords do not match",
+        path: ["confirmNewPassword"],
+      });
+    }
+  });
+export const UpdateEmailSchema = z
+  .object({
+    newEmail: z.string().email(),
+    confirmNewEmail: z.string().email(),
+    password: z.string(),
+  })
+  .superRefine(({ confirmNewEmail, newEmail }, ctx) => {
+    if (confirmNewEmail !== newEmail) {
+      ctx.addIssue({
+        code: "custom",
+        message: "New emails do not match",
+        path: ["confirmNewEmail"],
+      });
+    }
+  });
+export const DeleteAccountSchema = z.object({
+  password: z.string(),
+  areYouSure: z.string().regex(/^Yes, delete my account$/, {
+    message: `You must type "Yes, delete my account" to confirm`,
+  }),
 });
 
 // Template schemas
