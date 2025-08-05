@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql, eq, ne, ilike, and, or, inArray, desc } from "drizzle-orm";
+import { z } from "zod/v4";
 
 import { db } from "@/db/index";
 import { templates, SelectTemplate, DiscCount } from "@/db/schema/templates";
@@ -104,7 +105,7 @@ export async function fetchTemplateById(id: string): Promise<SelectTemplate> {
     return SelectTemplateSchema.parse(rows[0]);
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch templates");
+    throw new Error("Failed to fetch template");
   }
 }
 
@@ -176,7 +177,7 @@ export async function addTemplate(
     // If validation fails, return the errors and form data
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         toast: {
           title: "Error: failed to create template",
           message: "Required field(s) missing",
@@ -301,7 +302,7 @@ export async function editTemplate(
 
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         toast: {
           title: "Error: failed to update template",
           message: "Required field(s) missing",

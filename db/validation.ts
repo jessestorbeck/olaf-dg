@@ -1,4 +1,4 @@
-import z from "zod";
+import z from "zod/v4";
 import {
   createInsertSchema,
   createSelectSchema,
@@ -16,7 +16,7 @@ const templateVarMessage =
 const maxLenField = 50;
 const maxLenText = 500;
 const tooLong = (maxLen: number) => {
-  return { message: `Cannot be more than ${maxLen} characters` };
+  return { error: `Cannot be more than ${maxLen} characters` };
 };
 
 // User schemas
@@ -28,57 +28,52 @@ export const UserSettingsSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: "Account name is required" })
+    .min(1, { error: "Account name is required" })
     .max(maxLenField, tooLong(maxLenField)),
   holdDuration: z.coerce
     .number()
-    .int({ message: "Must be a whole number" })
-    .min(30, { message: "Must be at least 30 days" })
-    .max(365, { message: "Cannot be more than 365 days" }),
+    .int({ error: "Must be a whole number" })
+    .min(30, { error: "Must be at least 30 days" })
+    .max(365, { error: "Cannot be more than 365 days" }),
   laf: z
     .string()
     .trim()
-    .min(1, { message: "Lost-and-found name is required" })
+    .min(1, { error: "Lost-and-found name is required" })
     .max(maxLenField, tooLong(maxLenField)),
 });
 
 // Auth schemas
 const passwordValidation = z
   .string()
-  .min(8, { message: "Must be at least 8 characters" })
-  .regex(/[a-z]/, { message: "Must contain a lowercase letter" })
-  .regex(/[A-Z]/, { message: "Must contain an uppercase letter" })
-  .regex(/\d/, { message: "Must contain a number" })
+  .min(8, { error: "Must be at least 8 characters" })
+  .regex(/[a-z]/, { error: "Must contain a lowercase letter" })
+  .regex(/[A-Z]/, { error: "Must contain an uppercase letter" })
+  .regex(/\d/, { error: "Must contain a number" })
   .regex(/[^a-zA-Z\d\s]/, {
-    message: "Must contain a special character",
+    error: "Must contain a special character",
   });
 export const SignupSchema = z
   .object({
-    name: z.string().trim().min(1, { message: "Name is required" }),
+    name: z.string().trim().min(1, { error: "Name is required" }),
     laf: z
       .string()
       .trim()
-      .min(1, { message: "Lost-and-found name is required" })
+      .min(1, { error: "Lost-and-found name is required" })
       .max(maxLenField, tooLong(maxLenField)),
-    email: z.string().email(),
+    email: z.email(),
     password: passwordValidation,
     confirmPassword: z.string(),
   })
-  .superRefine(({ confirmPassword, password }, ctx) => {
-    if (confirmPassword !== password) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-      });
-    }
+  .refine((data) => data.confirmPassword === data.password, {
+    error: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 export const LoginSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
   password: z.string(),
 });
 export const ForgotPasswordSchema = z.object({
-  email: z.string().email(),
+  email: z.email(),
 });
 export const ResetPasswordSchema = z
   .object({
@@ -86,14 +81,9 @@ export const ResetPasswordSchema = z
     newPassword: passwordValidation,
     confirmNewPassword: z.string(),
   })
-  .superRefine(({ confirmNewPassword, newPassword }, ctx) => {
-    if (confirmNewPassword !== newPassword) {
-      ctx.addIssue({
-        code: "custom",
-        message: "New passwords do not match",
-        path: ["confirmNewPassword"],
-      });
-    }
+  .refine((data) => data.confirmNewPassword === data.newPassword, {
+    error: "New passwords do not match",
+    path: ["confirmNewPassword"],
   });
 // UpdatePasswordSchema is used when the user is logged in
 // in contrast to ResetPasswordSchema which is used when the user has forgotten their password
@@ -103,34 +93,24 @@ export const UpdatePasswordSchema = z
     newPassword: passwordValidation,
     confirmNewPassword: z.string(),
   })
-  .superRefine(({ confirmNewPassword, newPassword }, ctx) => {
-    if (confirmNewPassword !== newPassword) {
-      ctx.addIssue({
-        code: "custom",
-        message: "New passwords do not match",
-        path: ["confirmNewPassword"],
-      });
-    }
+  .refine((data) => data.confirmNewPassword === data.newPassword, {
+    error: "New passwords do not match",
+    path: ["confirmNewPassword"],
   });
 export const UpdateEmailSchema = z
   .object({
-    newEmail: z.string().email(),
-    confirmNewEmail: z.string().email(),
+    newEmail: z.email(),
+    confirmNewEmail: z.email(),
     password: z.string(),
   })
-  .superRefine(({ confirmNewEmail, newEmail }, ctx) => {
-    if (confirmNewEmail !== newEmail) {
-      ctx.addIssue({
-        code: "custom",
-        message: "New emails do not match",
-        path: ["confirmNewEmail"],
-      });
-    }
+  .refine((data) => data.confirmNewEmail === data.newEmail, {
+    error: "New emails do not match",
+    path: ["confirmNewEmail"],
   });
 export const DeleteAccountSchema = z.object({
   password: z.string(),
   areYouSure: z.string().regex(/^Yes, delete my account$/, {
-    message: `You must type "Yes, delete my account" to confirm`,
+    error: `You must type "Yes, delete my account" to confirm`,
   }),
 });
 
@@ -139,30 +119,25 @@ export const CreateTemplateSchema = createInsertSchema(templates, {
   name: (schema) =>
     schema
       .trim()
-      .min(1, { message: "Your template must have a name" })
+      .min(1, { error: "Your template must have a name" })
       .max(maxLenField, tooLong(maxLenField))
       // Templates can't be called "custom" (case-insensitive),
       // since "custom" is reserved for custom messages added to specific discs
       .refine((val) => val.toLowerCase() !== "custom", {
-        message: `Template cannot be named "custom" (case-insensitive)`,
+        error: `Template cannot be named "custom" (case-insensitive)`,
       }),
-
   content: (schema) =>
     schema
       .trim()
-      .min(1, { message: "Your template must have content" })
+      .min(1, { error: "Your template must have content" })
       .max(maxLenText, tooLong(maxLenText))
-      .regex(/\$laf/, { message: templateVarMessage })
-      .regex(/\$heldUntil/, { message: templateVarMessage }),
-}).extend({
-  addAnother: z.string().regex(/^(true|false)$/),
-  // Unfortunately, it seems like there's no way to add a user-facing message
-  // to the ZodEnum which createInsertSchema infers from the database schema
-  // So we have to just overwrite it with the same enum and the desired message
-  type: z.enum(["initial", "reminder", "extension"], {
-    message: "You must select a template type",
-  }),
-});
+      .regex(/\$laf/, { error: templateVarMessage })
+      .regex(/\$heldUntil/, { error: templateVarMessage }),
+  type: (schema) =>
+    schema.refine((val) => ["initial", "reminder", "extension"].includes(val), {
+      error: "You must select a template type",
+    }),
+}).extend({ addAnother: z.string().regex(/^(true|false)$/) });
 const TemplateExtensions = {
   name: CreateTemplateSchema.shape.name,
   type: CreateTemplateSchema.shape.type,
@@ -187,7 +162,7 @@ export const UpdateTemplateSchema = (
         return true;
       },
       {
-        message: "Cannot change the type of a default template",
+        error: "Cannot change the type of a default template",
         path: ["type"],
       }
     )
@@ -199,7 +174,7 @@ export const UpdateTemplateSchema = (
         return true;
       },
       {
-        message: "Cannot change the type of a template assigned to discs",
+        error: "Cannot change the type of a template assigned to discs",
         path: ["type"],
       }
     );
@@ -209,52 +184,34 @@ export const UpdateTemplateSchema = (
 export const CreateDiscSchema = createInsertSchema(discs, {
   name: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   phone: (schema) =>
-    schema.trim().regex(/^\d{10}$/, { message: "Invalid phone number" }),
+    schema.trim().regex(/^\d{10}$/, { error: "Invalid phone number" }),
   color: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   brand: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   plastic: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   mold: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   location: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   notes: (schema) => schema.trim().max(maxLenText, tooLong(maxLenText)),
-  initialTemplate: (schema) =>
-    schema.or(
-      z
-        .string()
-        .regex(/^custom$/)
-        .transform(() => null)
-    ),
+  // Make sure that "custom" (and any other invalid UUID) is NULL in the database
+  initialTemplate: z.uuid().nullable().catch(null),
+  reminderTemplate: z.uuid().nullable().catch(null),
+  extensionTemplate: z.uuid().nullable().catch(null),
   initialText: (schema) =>
     schema
       .trim()
-      .min(1, { message: "Notification text is required" })
+      .min(1, { error: "Notification text is required" })
       .max(maxLenText, tooLong(maxLenText)),
-  reminderTemplate: (schema) =>
-    schema.or(
-      z
-        .string()
-        .regex(/^custom$/)
-        .transform(() => null)
-    ),
   reminderText: (schema) =>
     schema
       .trim()
-      .min(1, { message: "Reminder text is required" })
+      .min(1, { error: "Reminder text is required" })
       .max(maxLenText, tooLong(maxLenText)),
-  extensionTemplate: (schema) =>
-    schema.or(
-      z
-        .string()
-        .regex(/^custom$/)
-        .transform(() => null)
-    ),
   extensionText: (schema) =>
     schema
       .trim()
-      .min(1, { message: "Extension text is required" })
+      .min(1, { error: "Extension text is required" })
       .max(maxLenText, tooLong(maxLenText)),
-}).extend({
-  addAnother: z.string().regex(/^(true|false)$/),
-});
+}).extend({ addAnother: z.string().regex(/^(true|false)$/) });
+
 const DiscExtensions = {
   name: CreateDiscSchema.shape.name,
   phone: CreateDiscSchema.shape.phone,
@@ -273,35 +230,18 @@ const DiscExtensions = {
 };
 export const SelectDiscSchema = createSelectSchema(discs, {
   ...DiscExtensions,
-  // Need to reverse the transform for custom templates when selecting
-  // For some reason, extending the schema wasn't working here,
-  // and I couldn't get the transform to work correctly:
-  // e.g., initialTemplate: (schema) => schema.transform((val) => val ?? "custom"),
-  // Therefore, I'm just overwriting the schema
-  initialTemplate: z
-    .string()
-    .uuid()
-    .nullable()
-    .transform((val) => val ?? "custom"),
-  reminderTemplate: z
-    .string()
-    .uuid()
-    .nullable()
-    .transform((val) => val ?? "custom"),
-  extensionTemplate: z
-    .string()
-    .uuid()
-    .nullable()
-    .transform((val) => val ?? "custom"),
+  initialTemplate: z.uuid().catch("custom"),
+  reminderTemplate: z.uuid().catch("custom"),
+  extensionTemplate: z.uuid().catch("custom"),
 });
 export const UpdateDiscSchema = createUpdateSchema(discs, DiscExtensions);
 
 // For disc pick-up extension
 export const DaysSchema = z
-  .number({ message: "Must be a number" })
-  .int({ message: "Must be a whole number" })
-  .min(1, { message: "Must be greater than zero" })
-  .max(365, { message: "Cannot be more than 365" });
+  .number({ error: "Must be a number" })
+  .int({ error: "Must be a whole number" })
+  .min(1, { error: "Must be greater than zero" })
+  .max(365, { error: "Cannot be more than 365" });
 
 // Trend schemas
 export const CreateTrendSchema = createInsertSchema(trends);

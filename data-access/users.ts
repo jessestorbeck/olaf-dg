@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { APIError } from "better-auth/api";
+import { z } from "zod/v4";
 
 import { ToastState } from "@/app/ui/toast";
 import { auth } from "@/app/lib/auth";
@@ -104,7 +105,7 @@ export async function updateUserSettings(
     );
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         toast: {
           title: "Error: failed to update disc",
           message: "Required field(s) missing",
@@ -161,7 +162,7 @@ export async function signUp(
   // If validation fails, return the errors and form data
   if (!validatedFields.success) {
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
+      errors: z.flattenError(validatedFields.error).fieldErrors,
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -227,7 +228,7 @@ export async function login(
   // If validation fails, return the errors and form data
   if (!validatedFields.success) {
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
+      errors: z.flattenError(validatedFields.error).fieldErrors,
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -298,7 +299,7 @@ export async function forgotPassword(
   // If validation fails, return the errors and form data
   if (!validatedFields.success) {
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
+      errors: z.flattenError(validatedFields.error).fieldErrors,
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -353,7 +354,7 @@ export async function resetPassword(
   // If validation fails, return the errors and form data
   if (!validatedFields.success) {
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
+      errors: z.flattenError(validatedFields.error).fieldErrors,
       // Send the form data back to state to repopulate the form
       formData: Object.fromEntries(formData),
     };
@@ -425,7 +426,7 @@ export async function updatePassword(
     // If validation fails, return the errors and form data
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         // Send the form data back to state to repopulate the form
         formData: Object.fromEntries(formData),
       };
@@ -530,7 +531,7 @@ export async function updateEmail(
     // If validation fails, return the errors and form data
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         // Send the form data back to state to repopulate the form
         formData: Object.fromEntries(formData),
       };
@@ -626,7 +627,7 @@ export async function deleteAccount(
     // If validation fails, return the errors and form data
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         // Send the form data back to state to repopulate the form
         formData: Object.fromEntries(formData),
       };

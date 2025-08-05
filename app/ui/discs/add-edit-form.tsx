@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { clsx } from "clsx";
 import Link from "next/link";
 
@@ -14,6 +14,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormRootError,
 } from "@/app/ui/form";
 import {
   Select,
@@ -47,6 +48,7 @@ const formDefaults = {
   mold: "",
   location: "",
   notes: "",
+  addAnother: "false",
 };
 
 export function AddEditForm({
@@ -105,9 +107,9 @@ export function AddEditForm({
       // Template-related defaults get defined here inside the component,
       // since they depend on the templates prop
       // Set default values for notification templates
-      initialTemplate: disc?.initialTemplate || initialTemplates[0].id,
-      reminderTemplate: disc?.reminderTemplate || reminderTemplates[0].id,
-      extensionTemplate: disc?.extensionTemplate || extensionTemplates[0].id,
+      initialTemplate: disc?.initialTemplate ?? initialTemplates[0].id,
+      reminderTemplate: disc?.reminderTemplate ?? reminderTemplates[0].id,
+      extensionTemplate: disc?.extensionTemplate ?? extensionTemplates[0].id,
       // Set default values for notification text fields
       initialText:
         // Use the disc's notification text if it exists
@@ -157,8 +159,6 @@ export function AddEditForm({
           },
           userSettings
         ),
-      // Have to set a value here to avoid controlled input error
-      addAnother: "false",
     },
   });
 
@@ -175,7 +175,7 @@ export function AddEditForm({
   // Handle changes to fields that generate notification text fields
   interface notificationTextField {
     name: keyof z.infer<typeof DiscSchema>;
-    template: string | null;
+    template: string | undefined;
     defaultTemplate: string;
     skip?: boolean;
   }
@@ -231,6 +231,7 @@ export function AddEditForm({
 
   // For server-side error messages
   useEffect(() => {
+    console.log("Form data:", state.formData);
     form.reset(state.formData);
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
@@ -405,7 +406,7 @@ export function AddEditForm({
                         field.onChange(e);
                       }}
                       {...field}
-                      value={field.value || initialTemplates[0].id}
+                      value={String(field.value ?? initialTemplates[0].id)}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -495,7 +496,7 @@ export function AddEditForm({
                         field.onChange(e);
                       }}
                       {...field}
-                      value={field.value || reminderTemplates[0].id}
+                      value={String(field.value ?? reminderTemplates[0].id)}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -583,7 +584,7 @@ export function AddEditForm({
                         field.onChange(e);
                       }}
                       {...field}
-                      value={field.value || extensionTemplates[0].id}
+                      value={String(field.value ?? extensionTemplates[0].id)}
                     >
                       <FormControl>
                         <SelectTrigger
@@ -730,6 +731,7 @@ export function AddEditForm({
             </Button>
           )}
         </div>
+        <FormRootError className="flex justify-end mt-2" />
       </form>
     </Form>
   );

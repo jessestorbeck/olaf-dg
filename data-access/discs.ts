@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { sql, eq, ilike, inArray, and, or, desc, SQL } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { db } from "@/db/index";
 import { discs, SelectDisc } from "@/db/schema/discs";
@@ -164,7 +164,7 @@ export async function fetchDiscById(id: string): Promise<SelectDisc | void> {
     // If validation fails, page.tsx will show the not found message
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error("Failed to fetch templates");
+    throw new Error("Failed to fetch disc");
   }
 }
 
@@ -273,7 +273,7 @@ export async function addDisc(
     // If validation fails, return the errors and form data
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         toast: {
           title: "Error: failed to create disc",
           message: "Required field(s) missing",
@@ -379,7 +379,7 @@ export async function editDisc(
 
     if (!validatedFields.success) {
       return {
-        errors: validatedFields.error.flatten().fieldErrors,
+        errors: z.flattenError(validatedFields.error).fieldErrors,
         toast: {
           title: "Error: failed to update disc",
           message: "Required field(s) missing",
@@ -388,6 +388,8 @@ export async function editDisc(
         formData: Object.fromEntries(formData),
       };
     }
+
+    console.log("Validated fields:", validatedFields.data);
 
     await db
       .update(discs)
@@ -605,7 +607,7 @@ export async function addTimeToDiscs(
     const validatedDays = DaysSchema.safeParse(days);
     if (!validatedDays.success) {
       return {
-        errors: validatedDays.error.flatten(),
+        errors: z.flattenError(validatedDays.error),
         toast: {
           title: "Error: invalid days",
           message: "Days must be a positive whole number <= 365",
