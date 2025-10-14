@@ -31,7 +31,7 @@ export const UserSettingsSchema = z.object({
     .min(1, { error: "Account name is required" })
     .max(maxLenField, tooLong(maxLenField)),
   holdDuration: z.coerce
-    .number()
+    .number<number>()
     .int({ error: "Must be a whole number" })
     .min(30, { error: "Must be at least 30 days" })
     .max(365, { error: "Cannot be more than 365 days" }),
