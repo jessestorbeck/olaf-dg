@@ -191,10 +191,28 @@ export const CreateDiscSchema = createInsertSchema(discs, {
   mold: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   location: (schema) => schema.trim().max(maxLenField, tooLong(maxLenField)),
   notes: (schema) => schema.trim().max(maxLenText, tooLong(maxLenText)),
-  // Make sure that "custom" (and any other invalid UUID) is NULL in the database
-  initialTemplate: z.uuid().nullable().catch(null),
-  reminderTemplate: z.uuid().nullable().catch(null),
-  extensionTemplate: z.uuid().nullable().catch(null),
+  // Make sure that "custom" is transformed to NULL in the database
+  initialTemplate: (schema) =>
+    schema.or(
+      z
+        .string()
+        .regex(/^custom$/)
+        .transform(() => null)
+    ),
+  reminderTemplate: (schema) =>
+    schema.or(
+      z
+        .string()
+        .regex(/^custom$/)
+        .transform(() => null)
+    ),
+  extensionTemplate: (schema) =>
+    schema.or(
+      z
+        .string()
+        .regex(/^custom$/)
+        .transform(() => null)
+    ),
   initialText: (schema) =>
     schema
       .trim()
@@ -230,9 +248,6 @@ const DiscExtensions = {
 };
 export const SelectDiscSchema = createSelectSchema(discs, {
   ...DiscExtensions,
-  initialTemplate: z.uuid().catch("custom"),
-  reminderTemplate: z.uuid().catch("custom"),
-  extensionTemplate: z.uuid().catch("custom"),
 });
 export const UpdateDiscSchema = createUpdateSchema(discs, DiscExtensions);
 

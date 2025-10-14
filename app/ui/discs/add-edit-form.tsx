@@ -60,10 +60,10 @@ export function AddEditForm({
   templates: SelectTemplate[];
   userSettings: UserSettings;
 }) {
-  // Sort templates by type and default
+  // Organize templates, filtering first by type,
+  // then sorting by isDefault and name
   const initialTemplates = templates
     .filter((template) => template.type === "initial")
-    // sort by isDefault first, then by name
     .sort(
       (a, b) =>
         Number(b.isDefault) - Number(a.isDefault) ||
@@ -175,7 +175,7 @@ export function AddEditForm({
   // Handle changes to fields that generate notification text fields
   interface notificationTextField {
     name: keyof z.infer<typeof DiscSchema>;
-    template: string | undefined;
+    template: string | null;
     defaultTemplate: string;
     skip?: boolean;
   }

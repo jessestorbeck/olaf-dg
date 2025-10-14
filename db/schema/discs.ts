@@ -31,17 +31,11 @@ export const discs = pgTable("discs", {
   mold: varchar({ length: 256 }),
   location: varchar({ length: 256 }),
   notes: text(),
-  initialTemplate: uuid("initial_template").references(() => templates.id, {
-    onDelete: "set null",
-  }),
+  initialTemplate: uuid("initial_template").references(() => templates.id),
   initialText: text("initial_text"),
-  reminderTemplate: uuid("reminder_template").references(() => templates.id, {
-    onDelete: "set null",
-  }),
+  reminderTemplate: uuid("reminder_template").references(() => templates.id),
   reminderText: text("reminder_text"),
-  extensionTemplate: uuid("extension_template").references(() => templates.id, {
-    onDelete: "set null",
-  }),
+  extensionTemplate: uuid("extension_template").references(() => templates.id),
   extensionText: text("extension_text"),
   notified: boolean().notNull().default(false),
   reminded: boolean().notNull().default(false),
