@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   name: text().notNull(),
   email: text().notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
+  smsPermissions: boolean("sms_permissions").default(false).notNull(),
   image: text(),
   laf: varchar({ length: 256 }).notNull(),
   holdDuration: integer("hold_duration").notNull().default(60),
@@ -45,4 +46,5 @@ export type UserSettings = {
   name: string;
   holdDuration: number;
   laf: string | null;
+  smsPermissions: boolean;
 };

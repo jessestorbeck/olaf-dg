@@ -512,7 +512,11 @@ export async function sendNotifications(
       }
       // Send the SMS
       try {
-        const apiResponse = sendSMS(disc.phone, notificationText);
+        const apiResponse = sendSMS(
+          disc.phone,
+          notificationText,
+          userSettings.smsPermissions
+        );
         return {
           ...disc,
           [textField]: notificationText,
@@ -570,18 +574,20 @@ export async function sendNotifications(
     const updatedCount = updatedDiscs.filter(
       (disc) => disc[booleanField] === true
     ).length;
+    const demoMessage =
+      userSettings.smsPermissions ? "" : "; [demo mode: no notifications sent]";
     if (updatedCount === ids.length) {
       return {
         toast: {
           title: `Sucessfully sent ${mode} notification(s)`,
-          message: `Notified owners of ${updatedCount} disc(s)`,
+          message: `Notified owners of ${updatedCount} disc(s)${demoMessage}`,
         },
       };
     } else {
       return {
         toast: {
           title: `Sent ${updatedCount} of ${ids.length} ${mode} notification(s)`,
-          message: `Notified owners of ${updatedCount} disc(s); ${ids.length - updatedCount} notification(s) failed to send`,
+          message: `Notified owners of ${updatedCount} disc(s); ${ids.length - updatedCount} notification(s) failed to send${demoMessage}`,
         },
       };
     }
@@ -642,18 +648,22 @@ export async function addTimeToDiscs(
       if (notificationText) {
         // Send the SMS
         try {
-          sendSMS(disc.phone, notificationText);
+          sendSMS(disc.phone, notificationText, userSettings.smsPermissions);
         } catch (error) {
           console.error("SMS error:", error);
         }
       }
     });
 
+    const demoMessage =
+      userSettings.smsPermissions ? "" : "; [demo mode: no notifications sent]";
+
     revalidatePath("/dashboard/discs");
+
     return {
       toast: {
         title: "Time added!",
-        message: `Added ${validatedDays.data} day(s) to ${ids.length} disc(s)`,
+        message: `Added ${validatedDays.data} day(s) to ${ids.length} disc(s) and notified owners${demoMessage}`,
       },
     };
   } catch (error) {

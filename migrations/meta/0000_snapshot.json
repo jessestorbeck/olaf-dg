@@ -1,5 +1,5 @@
 {
-  "id": "329ab49b-a86b-4652-8690-b2b80df6c6fc",
+  "id": "f23e6e60-dbfd-41f2-bc94-32293590b8be",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -410,7 +410,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "discs_reminder_template_templates_id_fk": {
@@ -423,7 +423,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "discs_extension_template_templates_id_fk": {
@@ -436,7 +436,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -629,6 +629,13 @@
         },
         "email_verified": {
           "name": "email_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "sms_permissions": {
+          "name": "sms_permissions",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

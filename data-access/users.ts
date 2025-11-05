@@ -64,6 +64,7 @@ export async function fetchUserSettings(): Promise<UserSettings> {
         name: users.name,
         holdDuration: users.holdDuration,
         laf: users.laf,
+        smsPermissions: users.smsPermissions,
       })
       .from(users)
       .where(eq(users.id, userId))

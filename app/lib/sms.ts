@@ -17,7 +17,8 @@ const allowedNumbers = [process.env.MY_PHONE_NUMBER];
 
 export const sendSMS = (
   to: string,
-  body: string
+  body: string,
+  smsPermissions: boolean = false
 ): Promise<{ status: number; [key: string]: unknown }> => {
   if (!allowedNumbers.includes(to)) {
     throw new Error("SMS failed: this number is not allowed");
@@ -31,6 +32,11 @@ export const sendSMS = (
     to: ["+1" + to],
     body,
   });
+
+  if (!smsPermissions) {
+    // If user isn't allowed to send SMS, generate a mock response
+    return Promise.resolve({ status: 201 });
+  }
 
   return axios.post(smsParams.url, payload, { headers });
 };

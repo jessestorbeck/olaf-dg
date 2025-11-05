@@ -90,6 +90,7 @@ CREATE TABLE "users" (
 	"name" text NOT NULL,
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
+	"sms_permissions" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"laf" varchar(256) NOT NULL,
 	"hold_duration" integer DEFAULT 60 NOT NULL,
@@ -101,8 +102,8 @@ CREATE TABLE "users" (
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "discs" ADD CONSTRAINT "discs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "discs" ADD CONSTRAINT "discs_initial_template_templates_id_fk" FOREIGN KEY ("initial_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "discs" ADD CONSTRAINT "discs_reminder_template_templates_id_fk" FOREIGN KEY ("reminder_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "discs" ADD CONSTRAINT "discs_extension_template_templates_id_fk" FOREIGN KEY ("extension_template") REFERENCES "public"."templates"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "discs" ADD CONSTRAINT "discs_initial_template_templates_id_fk" FOREIGN KEY ("initial_template") REFERENCES "public"."templates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "discs" ADD CONSTRAINT "discs_reminder_template_templates_id_fk" FOREIGN KEY ("reminder_template") REFERENCES "public"."templates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "discs" ADD CONSTRAINT "discs_extension_template_templates_id_fk" FOREIGN KEY ("extension_template") REFERENCES "public"."templates"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "templates" ADD CONSTRAINT "templates_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "trends" ADD CONSTRAINT "trends_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;
