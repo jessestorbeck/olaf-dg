@@ -4,6 +4,7 @@ import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/v4";
+import { PatternFormat } from "react-number-format";
 import { clsx } from "clsx";
 import Link from "next/link";
 
@@ -23,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/ui/select";
-import { Input } from "@/app/ui/input";
+import { Input, inputStyles } from "@/app/ui/input";
 import { Textarea } from "@/app/ui/textarea";
 import { Button } from "@/app/ui/button";
 import { useToast } from "@/app/hooks/use-toast";
@@ -36,7 +37,7 @@ import {
 import { CreateDiscSchema, UpdateDiscSchema } from "@/db/validation";
 import { SelectDisc, NotificationPreviewDisc } from "@/db/schema/discs";
 import { SelectTemplate } from "@/db/schema/templates";
-import { getNotificationText } from "@/app/lib/utils";
+import { cn, getNotificationText } from "@/app/lib/utils";
 import { UserSettings } from "@/db/schema/users";
 
 const formDefaults = {
@@ -231,7 +232,6 @@ export function AddEditForm({
 
   // For server-side error messages
   useEffect(() => {
-    console.log("Form data:", state.formData);
     form.reset(state.formData);
     if (state.errors) {
       for (const [key, value] of Object.entries(state.errors)) {
@@ -252,7 +252,19 @@ export function AddEditForm({
 
   return (
     <Form {...form}>
-      <form action={formAction}>
+      <form
+        action={(formData) => {
+          // This seems like an anti-pattern,
+          // but otherwise I can't get the phone number to submit without formatting characters
+          // react-number-format is supposed to handle this, so I'm not sure what's happening
+          const phone = formData.get("phone");
+          if (phone) {
+            const cleanPhone = phone.toString().replace(/\D/g, "");
+            formData.set("phone", cleanPhone);
+          }
+          formAction(formData);
+        }}
+      >
         {/* Owner details */}
         <div className="bg-gray-50 p-4 mt-4 rounded-lg">
           <span className="font-semibold">Owner</span>
@@ -283,11 +295,24 @@ export function AddEditForm({
                 <FormItem>
                   <FormLabel>{"Phone (required)"}</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="555-555-5555"
-                      className="bg-background"
+                    <PatternFormat
+                      format="(###) ###-####"
+                      mask="_"
+                      placeholder="(555) 555-5555"
+                      className={cn(inputStyles, "bg-background")}
                       required
-                      {...field}
+                      type="tel"
+                      inputMode="numeric"
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      getInputRef={field.ref}
+                      value={field.value}
+                      onValueChange={(values) => {
+                        // Need this so that client-side validation doesn't run on formatted value
+                        // I'm not sure why this doesn't also work for validation after the form is submitted,
+                        // but I still need to manually stip the formatting characters above before calling the form action
+                        field.onChange(values.value); // Store clean digits
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
