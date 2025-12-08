@@ -389,8 +389,6 @@ export async function editDisc(
       };
     }
 
-    console.log("Validated fields:", validatedFields.data);
-
     await db
       .update(discs)
       .set({

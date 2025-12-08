@@ -49,7 +49,7 @@ export const auth = betterAuth({
       sendDeleteAccountVerification: async ({
         user,
         url,
-        token,
+        // token,
       }: {
         user: { email: string };
         url: string;
@@ -65,7 +65,7 @@ export const auth = betterAuth({
           text: `We received a request to delete your Olaf account. Click the link to delete your account: ${fixedUrl}`,
           html: `We received a request to delete your Olaf account. <a href="${fixedUrl}">Click here to delete your account.</a>`,
         });
-        console.log("token:", token);
+        // console.log("token:", token);
       },
     },
   },

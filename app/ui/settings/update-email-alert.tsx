@@ -51,7 +51,6 @@ export function UpdateEmailAlert({ userEmail }: { userEmail: string }) {
   useEffect(() => {
     form.reset(state.formData);
     if (state.errors) {
-      console.log(state.errors);
       for (const [key, value] of Object.entries(state.errors)) {
         form.setError(key as keyof z.infer<typeof UpdateEmailSchema>, {
           message: (value as string[])[0],
